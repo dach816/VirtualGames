@@ -1,15 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using VirtualGames.Common;
+using VirtualGames.Common.Interface;
 using VirtualGames.Data;
+using VirtualGames.Data.Password;
 
 namespace VirtualGames
 {
@@ -28,7 +26,14 @@ namespace VirtualGames
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
+
+            // Database
+            var dbConfig = Configuration.GetSection("CosmosDb");
+            services.AddSingleton<IRepository<Password>>(InitializeCosmosClientInstanceAsync<Password>(dbConfig));
+
+            // Services
             services.AddSingleton<WeatherForecastService>();
+            services.AddSingleton<PasswordService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -55,6 +60,15 @@ namespace VirtualGames
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
+        }
+
+        private static Repository<T> InitializeCosmosClientInstanceAsync<T>(IConfiguration configuration)
+        {
+            var databaseName = configuration.GetSection("DatabaseName").Value;
+            var account = configuration.GetSection("Account").Value;
+            var key = configuration.GetSection("Key").Value;
+            var client = new CosmosClient(account, key);
+            return new Repository<T>(client, databaseName);
         }
     }
 }
