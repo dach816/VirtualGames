@@ -1,14 +1,17 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace VirtualGames.Data.Password
 {
-    public class Password
+    public class Password : BaseDataItem
     {
-        public string Id { get; set; }
-
         [JsonProperty("Password")]
         public string PasswordString { get; set; }
 
+        [JsonProperty(PropertyName = "category")]
         public string Category { get; set; }
+
+        [JsonProperty(PropertyName = "lastUsedTimestamp")]
+        public DateTime LastUsedTimestamp { get; set; }
     }
 }

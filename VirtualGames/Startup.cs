@@ -63,6 +63,7 @@ namespace VirtualGames
         }
 
         private static Repository<T> InitializeCosmosClientInstanceAsync<T>(IConfiguration configuration)
+            where T : BaseDataItem
         {
             var databaseName = configuration.GetSection("DatabaseName").Value;
             var account = configuration.GetSection("Account").Value;
