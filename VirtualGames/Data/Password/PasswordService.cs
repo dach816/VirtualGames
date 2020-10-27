@@ -11,7 +11,7 @@ namespace VirtualGames.Data.Password
     {
         private readonly IRepository<Password> _repo;
 
-        private const string GetPasswordsForGameQuery = @"SELECT TOP 10 * FROM items i ORDER BY i.lastUsedTimestamp ";
+        private const string GetPasswordsForGameQuery = @"SELECT TOP 5 * FROM items i ORDER BY i.lastUsedTimestamp ";
 
         public PasswordService(IRepository<Password> repo)
         {
