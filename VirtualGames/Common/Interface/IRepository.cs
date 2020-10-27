@@ -9,5 +9,7 @@ namespace VirtualGames.Common.Interface
         Task<IEnumerable<T>> ReadAsync(string query, string partitionKey = "Default");
 
         Task UpdateAsync(T item, string partitionKey = "Default");
+
+        Task<T> CreateAsync(T item, string partitionKey = "Default");
     }
 }

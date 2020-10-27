@@ -31,6 +31,7 @@ namespace VirtualGames
             // Database
             var dbConfig = Configuration.GetSection("CosmosDb");
             services.AddSingleton<IRepository<Password>>(InitializeCosmosClientInstanceAsync<Password>(dbConfig));
+            services.AddSingleton<IRepository<Game>>(InitializeCosmosClientInstanceAsync<Game>(dbConfig));
 
             // Services
             services.AddSingleton<WeatherForecastService>();

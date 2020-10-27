@@ -3,24 +3,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using VirtualGames.Common;
 using VirtualGames.Common.Interface;
 
 namespace VirtualGames.Data.Password
 {
     public class PasswordService
     {
-        private readonly IRepository<Password> _repo;
+        private readonly IRepository<Password> _passwordRepo;
+        private readonly IRepository<Game> _gameRepo;
 
         private const string GetPasswordsForGameQuery = @"SELECT TOP 5 * FROM items i ORDER BY i.lastUsedTimestamp ";
+        private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameState = 'InProgress' ORDER BY g.startTimestamp DESC ";
 
-        public PasswordService(IRepository<Password> repo)
+        public PasswordService(IRepository<Password> passwordRepo, IRepository<Game> gameRepo)
         {
-            _repo = repo;
+            _passwordRepo = passwordRepo;
+            _gameRepo = gameRepo;
         }
 
-        public async Task<IEnumerable<string>> GetPasswordsForGame()
+        public async Task<IEnumerable<string>> GetPasswordsForGameAsync()
         {
-            var allPasswords = (await _repo.ReadAsync(GetPasswordsForGameQuery)).ToList();
+            var allPasswords = (await _passwordRepo.ReadAsync(GetPasswordsForGameQuery)).ToList();
             if (!allPasswords.Any())
             {
                 throw new Exception("No passwords!");
@@ -30,10 +34,47 @@ namespace VirtualGames.Data.Password
             {
                 // Update timestamp so we don't reuse these passwords next game
                 password.LastUsedTimestamp = DateTime.UtcNow;
-                await _repo.UpdateAsync(password);
+                await _passwordRepo.UpdateAsync(password);
             }
 
             return allPasswords.Select(p => p.PasswordString);
+        }
+
+        public async Task<Game> GetCurrentGame()
+        {
+            var game = (await _gameRepo.ReadAsync(GetInProgressGameQuery)).FirstOrDefault();
+            if (game == null)
+            {
+                throw new Exception("No current game!");
+            }
+
+            return game;
+        }
+
+        public async Task<Game> GetOrCreateGameAsync()
+        {
+            var game = (await _gameRepo.ReadAsync(GetInProgressGameQuery)).FirstOrDefault();
+            if (game != null)
+            {
+                return game;
+            }
+
+            var passwords = (await GetPasswordsForGameAsync()).ToList();
+            game = new Game
+            {
+                Id = Guid.NewGuid().ToString(),
+                Passwords = passwords,
+                TotalWords = passwords.Count,
+                Category = "Default",
+                GameState = GameState.NotStarted,
+                StartTimestamp = DateTime.UtcNow
+            };
+            return await _gameRepo.CreateAsync(game);
+        }
+
+        public async Task UpdateGameAsync(Game game)
+        {
+            await _gameRepo.UpdateAsync(game);
         }
     }
 }

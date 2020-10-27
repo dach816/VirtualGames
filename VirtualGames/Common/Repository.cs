@@ -42,5 +42,10 @@ namespace VirtualGames.Common
                 id: item.Id,
                 item: item);
         }
+
+        public async Task<T> CreateAsync(T item, string partitionKey = "Default")
+        {
+            return await _container.CreateItemAsync(item, new PartitionKey(partitionKey));
+        }
     }
 }
