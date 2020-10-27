@@ -26,6 +26,7 @@ namespace VirtualGames
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
+            services.AddApplicationInsightsTelemetry();
 
             // Database
             var dbConfig = Configuration.GetSection("CosmosDb");
