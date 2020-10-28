@@ -34,7 +34,6 @@ namespace VirtualGames
             services.AddSingleton<IRepository<Game>>(InitializeCosmosClientInstanceAsync<Game>(dbConfig));
 
             // Services
-            services.AddSingleton<WeatherForecastService>();
             services.AddSingleton<PasswordService>();
         }
 
