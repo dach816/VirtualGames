@@ -13,6 +13,7 @@ namespace VirtualGamesTest
     public class DatabaseTests
     {
         private readonly Repository<Password> _passwordRepo;
+        private Repository<Game> _gameRepo;
 
         public DatabaseTests()
         {
@@ -20,6 +21,7 @@ namespace VirtualGamesTest
                 .AddUserSecrets(Assembly.GetAssembly(typeof(DatabaseTests))).Build();
             var cosmosClient = new CosmosClient(configuration["CosmosDb:Account"], configuration["CosmosDb:Key"]);
             _passwordRepo = new Repository<Password>(cosmosClient, configuration["CosmosDb:DatabaseName"]);
+            _gameRepo = new Repository<Game>(cosmosClient, configuration["CosmosDb:DatabaseName"]);
         }
 
         [Fact]
@@ -32,6 +34,18 @@ namespace VirtualGamesTest
             {
                 password.PasswordString = "Yogurt";
                 await _passwordRepo.UpdateAsync(password);
+            }
+        }
+
+        [Fact]
+        public async Task DeleteAllGamesAsync()
+        {
+            var query = "SELECT * FROM c";
+            var games = await _gameRepo.ReadAsync(query);
+
+            foreach (var game in games)
+            {
+                await _gameRepo.DeleteAsync(game);
             }
         }
     }

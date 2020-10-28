@@ -11,5 +11,7 @@ namespace VirtualGames.Common.Interface
         Task UpdateAsync(T item, string partitionKey = "Default");
 
         Task<T> CreateAsync(T item, string partitionKey = "Default");
+
+        Task<T> DeleteAsync(T item, string partitionKey = "Default");
     }
 }

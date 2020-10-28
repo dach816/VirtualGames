@@ -10,11 +10,14 @@ namespace VirtualGames.Data.Password
         [JsonProperty("passwords")]
         public List<string> Passwords { get; set; }
 
-        [JsonProperty("numCorrect")]
-        public int NumCorrect { get; set; }
+        [JsonProperty("redPoints")]
+        public int RedPoints { get; set; }
 
-        [JsonProperty("totalWords")]
-        public int TotalWords { get; set; }
+        [JsonProperty("bluePoints")]
+        public int BluePoints { get; set; }
+
+        [JsonProperty("currentWord")]
+        public string CurrentWord { get; set; }
 
         [JsonProperty("gameState")]
         public GameState GameState { get; set; }

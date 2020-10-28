@@ -5,10 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Pages\Components\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.15.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.14.0" />
   </ItemGroup>

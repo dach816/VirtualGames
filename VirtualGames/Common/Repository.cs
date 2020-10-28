@@ -47,5 +47,10 @@ namespace VirtualGames.Common
         {
             return await _container.CreateItemAsync(item, new PartitionKey(partitionKey));
         }
+
+        public async Task<T> DeleteAsync(T item, string partitionKey = "Default")
+        {
+            return await _container.DeleteItemAsync<T>(item.Id, new PartitionKey(partitionKey));
+        }
     }
 }

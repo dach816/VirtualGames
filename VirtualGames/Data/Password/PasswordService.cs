@@ -14,7 +14,8 @@ namespace VirtualGames.Data.Password
         private readonly IRepository<Game> _gameRepo;
 
         private const string GetPasswordsForGameQuery = @"SELECT TOP 5 * FROM items i ORDER BY i.lastUsedTimestamp ";
-        private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameState = 'InProgress' ORDER BY g.startTimestamp DESC ";
+        private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameState <> 2 ORDER BY g.startTimestamp DESC ";
+        private const string GetLatestGameQuery = @"SELECT TOP 1 * FROM items g ORDER BY g.startTimestamp DESC ";
 
         public PasswordService(IRepository<Password> passwordRepo, IRepository<Game> gameRepo)
         {
@@ -42,13 +43,7 @@ namespace VirtualGames.Data.Password
 
         public async Task<Game> GetCurrentGame()
         {
-            var game = (await _gameRepo.ReadAsync(GetInProgressGameQuery)).FirstOrDefault();
-            if (game == null)
-            {
-                throw new Exception("No current game!");
-            }
-
-            return game;
+            return (await _gameRepo.ReadAsync(GetLatestGameQuery)).FirstOrDefault();
         }
 
         public async Task<Game> GetOrCreateGameAsync()
@@ -64,7 +59,6 @@ namespace VirtualGames.Data.Password
             {
                 Id = Guid.NewGuid().ToString(),
                 Passwords = passwords,
-                TotalWords = passwords.Count,
                 Category = "Default",
                 GameState = GameState.NotStarted,
                 StartTimestamp = DateTime.UtcNow
