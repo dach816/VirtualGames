@@ -1,0 +1,11 @@
+﻿@using VirtualGames.Data.GuessWho
+
+<div class="col-lg-3 col-sm-6 text-center">
+    <img src="@Item.Item.Picture" alt="@Item.Item.Name" width="200" height="180"/>
+    <p>@Item.Item.Name</p>
+</div>
+
+@code {
+    [Parameter]
+    public GuessWhoBoardItem Item { get; set; }
+}

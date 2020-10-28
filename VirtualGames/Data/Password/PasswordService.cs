@@ -11,13 +11,13 @@ namespace VirtualGames.Data.Password
     public class PasswordService
     {
         private readonly IRepository<Password> _passwordRepo;
-        private readonly IRepository<Game> _gameRepo;
+        private readonly IRepository<PasswordGame> _gameRepo;
 
         private const string GetPasswordsForGameQuery = @"SELECT TOP 5 * FROM items i ORDER BY i.lastUsedTimestamp ";
         private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameState <> 2 ORDER BY g.startTimestamp DESC ";
         private const string GetLatestGameQuery = @"SELECT TOP 1 * FROM items g ORDER BY g.startTimestamp DESC ";
 
-        public PasswordService(IRepository<Password> passwordRepo, IRepository<Game> gameRepo)
+        public PasswordService(IRepository<Password> passwordRepo, IRepository<PasswordGame> gameRepo)
         {
             _passwordRepo = passwordRepo;
             _gameRepo = gameRepo;
@@ -41,12 +41,12 @@ namespace VirtualGames.Data.Password
             return allPasswords.Select(p => p.PasswordString);
         }
 
-        public async Task<Game> GetCurrentGame()
+        public async Task<PasswordGame> GetCurrentGame()
         {
             return (await _gameRepo.ReadAsync(GetLatestGameQuery)).FirstOrDefault();
         }
 
-        public async Task<Game> GetOrCreateGameAsync()
+        public async Task<PasswordGame> GetOrCreateGameAsync()
         {
             var game = (await _gameRepo.ReadAsync(GetInProgressGameQuery)).FirstOrDefault();
             if (game != null)
@@ -55,7 +55,7 @@ namespace VirtualGames.Data.Password
             }
 
             var passwords = (await GetPasswordsForGameAsync()).ToList();
-            game = new Game
+            game = new PasswordGame
             {
                 Id = Guid.NewGuid().ToString(),
                 Passwords = passwords,
@@ -66,7 +66,7 @@ namespace VirtualGames.Data.Password
             return await _gameRepo.CreateAsync(game);
         }
 
-        public async Task UpdateGameAsync(Game game)
+        public async Task UpdateGameAsync(PasswordGame game)
         {
             await _gameRepo.UpdateAsync(game);
         }

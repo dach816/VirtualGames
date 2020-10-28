@@ -1,0 +1,36 @@
+﻿@page "/guesswho"
+@using VirtualGames.Data.GuessWho
+@inject GuessWhoService GuessWhoService
+
+<h1 class="pb-2">Guess Who?</h1>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="card col-10">
+            <div class="card-body text-center">
+                @if (_game != null)
+                {
+                    <div class="row">
+                        @foreach (var item in _game.BlueBoard)
+                        {
+                            <GuessWhoPicture Item="@item" />
+                        }
+                    </div>
+                    
+                    <h3 mt-4>Red Chosen Item</h3>
+                    <GuessWhoPicture Item="@_game.RedChosenItem" />
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private GuessWhoGame _game;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _game = await GuessWhoService.GetOrCreateGameAsync(GuessWhoCategory.Food);
+        StateHasChanged();
+    }
+}

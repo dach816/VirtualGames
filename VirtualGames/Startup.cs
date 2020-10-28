@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using VirtualGames.Common;
 using VirtualGames.Common.Interface;
 using VirtualGames.Data;
+using VirtualGames.Data.GuessWho;
 using VirtualGames.Data.Password;
 
 namespace VirtualGames
@@ -31,10 +32,13 @@ namespace VirtualGames
             // Database
             var dbConfig = Configuration.GetSection("CosmosDb");
             services.AddSingleton<IRepository<Password>>(InitializeCosmosClientInstanceAsync<Password>(dbConfig));
-            services.AddSingleton<IRepository<Game>>(InitializeCosmosClientInstanceAsync<Game>(dbConfig));
+            services.AddSingleton<IRepository<PasswordGame>>(InitializeCosmosClientInstanceAsync<PasswordGame>(dbConfig));
+            services.AddSingleton<IRepository<GuessWhoItem>>(InitializeCosmosClientInstanceAsync<GuessWhoItem>(dbConfig));
+            services.AddSingleton<IRepository<GuessWhoGame>>(InitializeCosmosClientInstanceAsync<GuessWhoGame>(dbConfig));
 
             // Services
             services.AddSingleton<PasswordService>();
+            services.AddSingleton<GuessWhoService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

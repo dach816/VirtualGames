@@ -5,7 +5,7 @@ using VirtualGames.Common;
 
 namespace VirtualGames.Data.Password
 {
-    public class Game : BaseDataItem
+    public class PasswordGame : BaseDataItem
     {
         [JsonProperty("passwords")]
         public List<string> Passwords { get; set; }
