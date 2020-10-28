@@ -11,7 +11,7 @@ namespace VirtualGames.Data.GuessWho
     {
         private readonly IRepository<GuessWhoItem> _itemRepo;
         private readonly IRepository<GuessWhoGame> _gameRepo;
-        private static Random _random = new Random();
+        private static readonly Random _random = new Random();
 
         private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameState <> 2 ORDER BY g.startTimestamp DESC ";
         private const string GetLatestGameQuery = @"SELECT TOP 1 * FROM items g ORDER BY g.startTimestamp DESC ";
@@ -56,7 +56,7 @@ namespace VirtualGames.Data.GuessWho
                 IsRedTurn = false,
                 StartTimestamp = DateTime.UtcNow
             };
-            await _gameRepo.CreateAsync(game);
+            await _gameRepo.CreateAsync(game, category.ToString("G"));
             return game;
         }
 
@@ -67,7 +67,7 @@ namespace VirtualGames.Data.GuessWho
 
         private async Task<List<GuessWhoItem>> GetAllCategoryItemsAsync(GuessWhoCategory category)
         {
-            var items = (await _itemRepo.ReadAsync("", category.ToString("G"))).ToList();
+            var items = (await _itemRepo.ReadAsync(null, category.ToString("G"))).ToList();
             if (!items.Any())
             {
                 throw new Exception($"No items for category {category:G}.");

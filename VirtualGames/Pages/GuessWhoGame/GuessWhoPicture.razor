@@ -1,11 +1,26 @@
 ﻿@using VirtualGames.Data.GuessWho
 
 <div class="col-lg-3 col-sm-6 text-center">
-    <img src="@Item.Item.Picture" alt="@Item.Item.Name" width="200" height="180"/>
-    <p>@Item.Item.Name</p>
+    <a href="javascript:void(0);" @onclick="ToggleX">
+        <img src="@Item.Item.Picture" alt="@Item.Item.Name" width="200" height="180" style="opacity: @(Item.IsVisible ? 1 : 0.1)"/>
+    </a>
+    @if (Item.IsVisible)
+    {
+        <p>@Item.Item.Name</p>
+    }
+    else
+    {
+        <p><del>@Item.Item.Name</del></p>
+    }
 </div>
 
 @code {
     [Parameter]
     public GuessWhoBoardItem Item { get; set; }
+
+    private void ToggleX()
+    {
+        Item.IsVisible = !Item.IsVisible;
+        StateHasChanged();
+    }
 }
