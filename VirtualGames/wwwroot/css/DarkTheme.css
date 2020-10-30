@@ -8202,6 +8202,10 @@ a.text-dark:hover, a.text-dark:focus {
     background-color: #111111 !important;
 }
 
+.text-shadow {
+    text-shadow: 2px 2px 0 black
+}
+
 #blazor-error-ui {
     background: lightyellow;
     bottom: 0;

@@ -65,6 +65,18 @@ namespace VirtualGames.Data.GuessWho
             return (await _gameRepo.ReadAsync(GetLatestGameQuery, category.ToString("G"))).FirstOrDefault();
         }
 
+        public async Task UpdateGameAsync(GuessWhoGame game)
+        {
+            await _gameRepo.UpdateAsync(game, game.Category);
+        }
+
+        public async Task UpdateGameAsync(GuessWhoCategory category, bool isRed, GuessWhoBoardItem boardItem)
+        {
+            var game = await GetCurrentGame(category);
+            UpdateBoardItem(isRed ? game.RedBoard.ToList() : game.BlueBoard.ToList(), boardItem);
+            await _gameRepo.UpdateAsync(game, category.ToString("G"));
+        }
+
         private async Task<List<GuessWhoItem>> GetAllCategoryItemsAsync(GuessWhoCategory category)
         {
             var items = (await _itemRepo.ReadAsync(null, category.ToString("G"))).ToList();
@@ -80,6 +92,20 @@ namespace VirtualGames.Data.GuessWho
         {
             var index = _random.Next(items.Count);
             return items[index];
+        }
+
+        private List<GuessWhoBoardItem> UpdateBoardItem(
+            List<GuessWhoBoardItem> boardItems,
+            GuessWhoBoardItem updatedBoardItem)
+        {
+            var toUpdate = boardItems.FirstOrDefault(i => i.Id == updatedBoardItem.Id);
+            if (toUpdate == null)
+            {
+                return boardItems;
+            }
+
+            toUpdate.IsVisible = updatedBoardItem.IsVisible;
+            return boardItems;
         }
     }
 }

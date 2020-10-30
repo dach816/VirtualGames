@@ -1,8 +1,10 @@
-﻿namespace VirtualGames.Data.GuessWho
+﻿using System.ComponentModel;
+
+namespace VirtualGames.Data.GuessWho
 {
     public enum GuessWhoCategory
     {
-        Food,
-        HarryPotter
+        [Description("Food")] Food = 0,
+        [Description("Harry Potter")] HarryPotter = 1
     }
 }

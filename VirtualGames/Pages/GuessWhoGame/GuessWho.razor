@@ -1,4 +1,6 @@
 ﻿@page "/guesswho"
+@using VirtualGames.Common
+@using VirtualGames.Common.Extensions
 @using VirtualGames.Data.GuessWho
 @inject GuessWhoService GuessWhoService
 
@@ -6,31 +8,101 @@
 
 <div class="container">
     <div class="row justify-content-center">
-        <div class="card col-10">
-            <div class="card-body text-center">
-                @if (_game != null)
-                {
-                    <div class="row">
-                        @foreach (var item in _game.BlueBoard)
+        <div class="card col-12 border @(_isRed.HasValue && _isRed.Value ? "border-danger" : "border-info")">
+            @if (!_isRed.HasValue || _game == null || _game.GameState == GameState.NotStarted)
+            {
+                <div class="card-body text-center">
+                    <label class="mx-2">Category:</label>
+                    <select class="col-lg-4 col-12" @onchange="@((ChangeEventArgs e) => CategoryChange(e))">
+                        @foreach (var category in GuessWhoCategory.Food.ToSelectList())
                         {
-                            <GuessWhoPicture Item="@item" />
+                            <option value=@category.Value>@category.Text</option>
                         }
+                    </select>
+                    <div class="row justify-content-center mt-4">
+                        <button class="col-lg-4 col-12 btn btn-danger mx-1" @onclick="@(async () => await StartOrJoinGame(true))">Start or Join Game as Red!</button>
+                        <button class="col-lg-4 col-12 btn btn-info mx-1" @onclick="@(async () => await StartOrJoinGame(false))">Start or Join Game as Blue!</button>
                     </div>
-                    
-                    <h3 mt-4>Red Chosen Item</h3>
-                    <GuessWhoPicture Item="@_game.RedChosenItem" />
-                }
-            </div>
+                </div>
+            }
+            else
+            {
+                <div class="card-header text-center">
+                    <h1 class="@(_isRed.Value ? "text-danger" : "text-info") text-shadow">@(_isRed.Value ? "Red" : "Blue") Board</h1>
+                </div>
+                <div class="card-body text-center">
+                    @if (_game != null)
+                    {
+                        <div class="row">
+                            @foreach (var item in _isRed.Value ? _game.RedBoard : _game.BlueBoard)
+                            {
+                                <GuessWhoPicture Item="@item" Category="@_category" IsRed="@_isRed.Value"/>
+                            }
+                        </div>
+
+                        <h3 class="mt-4">@(_isRed.Value ? "Blue" : "Red") is trying to guess</h3>
+                        <div class="row justify-content-center">
+                            <GuessWhoPicture Item="@(_isRed.Value ? _game.RedChosenItem : _game.BlueChosenItem)"/>
+                        </div>
+                    }
+                </div>
+                <div class="card-footer text-center">
+                    <button class="btn btn-success" @onclick="EndGame" disabled="@_startGameDisabled">End Game</button>
+                    <button class="btn btn-secondary" @onclick="LeaveGame" disabled="@_startGameDisabled">Leave Game</button>
+                </div>
+            }
         </div>
     </div>
 </div>
 
 @code {
     private GuessWhoGame _game;
+    private GuessWhoCategory _category;
+    private bool? _isRed;
 
-    protected override async Task OnInitializedAsync()
+    private bool _startGameDisabled;
+
+    protected override void OnInitialized()
     {
-        _game = await GuessWhoService.GetOrCreateGameAsync(GuessWhoCategory.Food);
+        _category = GuessWhoCategory.Food;
+        _isRed = null;
+        _startGameDisabled = false;
+        StateHasChanged();
+    }
+
+    private void CategoryChange(ChangeEventArgs e)
+    {
+        _category = (GuessWhoCategory)e.Value;
+    }
+
+    private async Task StartOrJoinGame(bool isRed)
+    {
+        _startGameDisabled = true;
+        StateHasChanged();
+
+        _game = await GuessWhoService.GetOrCreateGameAsync(_category);
+        _isRed = isRed;
+        if (_game.GameState == GameState.NotStarted)
+        {
+            _game.GameState = GameState.InProgress;
+            await GuessWhoService.UpdateGameAsync(_game);
+        }
+
+        _startGameDisabled = false;
+        StateHasChanged();
+    }
+
+    private async Task EndGame()
+    {
+        _game.GameState = GameState.Finished;
+        _isRed = null;
+        StateHasChanged();
+        await GuessWhoService.UpdateGameAsync(_game);
+    }
+
+    private void LeaveGame()
+    {
+        _isRed = null;
         StateHasChanged();
     }
 }
