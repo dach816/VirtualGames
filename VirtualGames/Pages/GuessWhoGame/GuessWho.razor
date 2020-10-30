@@ -64,15 +64,12 @@
 
     protected override void OnInitialized()
     {
-        _category = GuessWhoCategory.Food;
-        _isRed = null;
-        _startGameDisabled = false;
-        StateHasChanged();
+        Init();
     }
 
     private void CategoryChange(ChangeEventArgs e)
     {
-        _category = (GuessWhoCategory)e.Value;
+        _category = (GuessWhoCategory)int.Parse(e.Value.ToString());
     }
 
     private async Task StartOrJoinGame(bool isRed)
@@ -95,14 +92,20 @@
     private async Task EndGame()
     {
         _game.GameState = GameState.Finished;
-        _isRed = null;
-        StateHasChanged();
+        Init();
         await GuessWhoService.UpdateGameAsync(_game);
     }
 
     private void LeaveGame()
     {
+        Init();
+    }
+
+    private void Init()
+    {
+        _category = GuessWhoCategory.Food;
         _isRed = null;
+        _startGameDisabled = false;
         StateHasChanged();
     }
 }
