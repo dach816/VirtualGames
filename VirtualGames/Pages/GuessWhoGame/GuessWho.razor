@@ -36,13 +36,20 @@
                         <div class="row">
                             @foreach (var item in _isRed.Value ? _game.RedBoard : _game.BlueBoard)
                             {
-                                <GuessWhoPicture Item="@item" OnVisibilityChanged="@(i => BoardItemChanged(i))"/>
+                                <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))" OnVisibilityChanged="@(i => BoardItemChanged(i))"/>
                             }
                         </div>
 
                         <h3 class="mt-4">@(_isRed.Value ? "Blue" : "Red") is trying to guess</h3>
                         <div class="row justify-content-center">
-                            <GuessWhoPicture Item="@(_isRed.Value ? _game.RedChosenItem : _game.BlueChosenItem)"/>
+                            @if (_isRed.Value)
+                            {
+                                <GuessWhoPicture BoardItem="@_game.RedChosenItem" Item="@(_items.FirstOrDefault(i => i.Id == _game.RedChosenItem.ItemId))" />
+                            }
+                            else
+                            {
+                                <GuessWhoPicture BoardItem="@_game.BlueChosenItem" Item="@(_items.FirstOrDefault(i => i.Id == _game.BlueChosenItem.ItemId))" />
+                            }
                         </div>
                     }
                 </div>
@@ -61,6 +68,7 @@
     private bool? _isRed;
     private bool _boardChanged;
     private bool _startGameDisabled;
+    private IEnumerable<GuessWhoItem> _items;
 
     public void BoardItemChanged(GuessWhoBoardItem item)
     {
@@ -90,6 +98,7 @@
             await GuessWhoService.UpdateGameAsync(_game);
         }
 
+        _items = await GuessWhoService.GetAllCategoryItemsAsync(_category);
         _startGameDisabled = false;
         StateHasChanged();
         PollForGameUpdate();
@@ -122,6 +131,11 @@
         {
             await Task.Delay(TimeSpan.FromSeconds(2));
             var game = await GuessWhoService.GetCurrentGame(_category);
+            if (game == null)
+            {
+                return;
+            }
+
             if (game.StartTimestamp != _game.StartTimestamp)
             {
                 _game = game;
@@ -147,7 +161,7 @@
                 game.BlueBoard = _game.BlueBoard;
                 await GuessWhoService.UpdateGameAsync(game);
             }
-            
+
             _game = game;
             _boardChanged = false;
             StateHasChanged();

@@ -6,7 +6,7 @@ namespace VirtualGames.Data.GuessWho
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        public GuessWhoItem Item { get; set; }
+        public string ItemId { get; set; }
 
         public bool IsVisible { get; set; }
     }

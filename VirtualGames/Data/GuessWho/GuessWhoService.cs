@@ -39,11 +39,11 @@ namespace VirtualGames.Data.GuessWho
             var boardItems = categoryItems.Select(i =>
                 new GuessWhoBoardItem
                 {
-                    Item = i,
+                    ItemId = i.Id,
                     IsVisible = true
                 }).ToList();
             var redChosenItem = GetRandomItem(boardItems);
-            var blueChosenItem = GetRandomItem(boardItems.Where(i => i.Item.Id != redChosenItem.Item.Id).ToList());
+            var blueChosenItem = GetRandomItem(boardItems.Where(i => i.ItemId != redChosenItem.ItemId).ToList());
             game = new GuessWhoGame
             {
                 Id = Guid.NewGuid().ToString(),
@@ -70,8 +70,8 @@ namespace VirtualGames.Data.GuessWho
 
             await _gameRepo.UpdateAsync(game, game.Category);
         }
-
-        private async Task<List<GuessWhoItem>> GetAllCategoryItemsAsync(GuessWhoCategory category)
+        
+        public async Task<List<GuessWhoItem>> GetAllCategoryItemsAsync(GuessWhoCategory category)
         {
             var items = (await _itemRepo.ReadAsync(null, category.ToString("G"))).ToList();
             if (!items.Any())
