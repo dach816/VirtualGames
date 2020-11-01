@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -64,6 +65,56 @@ namespace VirtualGamesTest
                 guessWhoItem.Picture = picture;
                 await _guessWhoItemRepo.UpdateAsync(guessWhoItem, category);
             }
+        }
+
+        [Theory]
+        [InlineData("", @"")]
+        public async Task UploadPictureAsync(string category, string pictureFolderPath)
+        {
+            if (!Directory.Exists(pictureFolderPath))
+            {
+                throw new Exception($"No directory at path {pictureFolderPath}.");
+            }
+
+            var files = Directory.GetFiles(pictureFolderPath);
+            if (files.Length < 24)
+            {
+                throw new Exception($"Need at least 24 files in folder {pictureFolderPath}.");
+            }
+
+            var id = 1;
+            foreach (var fileName in files)
+            {
+                if (id >= 25)
+                {
+                    break;
+                }
+
+                if (id < 7)
+                {
+                    id++;
+                    continue;
+                }
+
+                var imageArray = File.ReadAllBytes(fileName);
+                var imageString = Convert.ToBase64String(imageArray);
+                var guessWhoItem = new GuessWhoItem
+                {
+                    Id = id.ToString(),
+                    Category = category,
+                    Name = GetFileNameNoExtension(fileName),
+                    Picture = $"data:image/jpeg;base64,{imageString}"
+                };
+                await _guessWhoItemRepo.CreateAsync(guessWhoItem, category);
+                id++;
+            }
+        }
+
+        private string GetFileNameNoExtension(string fileName)
+        {
+            var dotIndex = fileName.IndexOf('.');
+            var slashIndex = fileName.LastIndexOf('\\') + 1;
+            return fileName.Substring(slashIndex, dotIndex - slashIndex);
         }
     }
 }
