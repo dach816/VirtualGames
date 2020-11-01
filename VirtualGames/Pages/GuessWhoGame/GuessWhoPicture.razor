@@ -16,19 +16,17 @@
 </div>
 
 @code {
+
     [Parameter]
     public GuessWhoBoardItem Item { get; set; }
 
     [Parameter]
-    public GuessWhoCategory Category { get; set; }
+    public Action<GuessWhoBoardItem> OnVisibilityChanged { get; set; }
 
-    [Parameter]
-    public bool IsRed { get; set; }
-
-    private async void ToggleX()
+    private void ToggleX()
     {
         Item.IsVisible = !Item.IsVisible;
+        OnVisibilityChanged(Item);
         StateHasChanged();
-        await GuessWhoService.UpdateGameAsync(Category, IsRed, Item);
     }
 }

@@ -20,10 +20,10 @@ namespace VirtualGames.Data.GuessWho
         public GuessWhoBoardItem BlueChosenItem { get; set; }
 
         [JsonProperty("redBoard")]
-        public IEnumerable<GuessWhoBoardItem> RedBoard { get; set; }
+        public List<GuessWhoBoardItem> RedBoard { get; set; }
 
         [JsonProperty("blueBoard")]
-        public IEnumerable<GuessWhoBoardItem> BlueBoard { get; set; }
+        public List<GuessWhoBoardItem> BlueBoard { get; set; }
 
         [JsonProperty("category")]
         public string Category { get; set; }

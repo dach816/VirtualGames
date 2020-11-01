@@ -11,7 +11,7 @@ namespace VirtualGames.Data.GuessWho
     {
         private readonly IRepository<GuessWhoItem> _itemRepo;
         private readonly IRepository<GuessWhoGame> _gameRepo;
-        private static readonly Random _random = new Random();
+        private static readonly Random Random = new Random();
 
         private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameState <> 2 ORDER BY g.startTimestamp DESC ";
         private const string GetLatestGameQuery = @"SELECT TOP 1 * FROM items g ORDER BY g.startTimestamp DESC ";
@@ -67,14 +67,8 @@ namespace VirtualGames.Data.GuessWho
 
         public async Task UpdateGameAsync(GuessWhoGame game)
         {
-            await _gameRepo.UpdateAsync(game, game.Category);
-        }
 
-        public async Task UpdateGameAsync(GuessWhoCategory category, bool isRed, GuessWhoBoardItem boardItem)
-        {
-            var game = await GetCurrentGame(category);
-            UpdateBoardItem(isRed ? game.RedBoard.ToList() : game.BlueBoard.ToList(), boardItem);
-            await _gameRepo.UpdateAsync(game, category.ToString("G"));
+            await _gameRepo.UpdateAsync(game, game.Category);
         }
 
         private async Task<List<GuessWhoItem>> GetAllCategoryItemsAsync(GuessWhoCategory category)
@@ -90,22 +84,8 @@ namespace VirtualGames.Data.GuessWho
 
         private GuessWhoBoardItem GetRandomItem(IList<GuessWhoBoardItem> items)
         {
-            var index = _random.Next(items.Count);
+            var index = Random.Next(items.Count);
             return items[index];
-        }
-
-        private List<GuessWhoBoardItem> UpdateBoardItem(
-            List<GuessWhoBoardItem> boardItems,
-            GuessWhoBoardItem updatedBoardItem)
-        {
-            var toUpdate = boardItems.FirstOrDefault(i => i.Id == updatedBoardItem.Id);
-            if (toUpdate == null)
-            {
-                return boardItems;
-            }
-
-            toUpdate.IsVisible = updatedBoardItem.IsVisible;
-            return boardItems;
         }
     }
 }

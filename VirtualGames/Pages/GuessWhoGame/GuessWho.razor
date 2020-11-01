@@ -36,7 +36,7 @@
                         <div class="row">
                             @foreach (var item in _isRed.Value ? _game.RedBoard : _game.BlueBoard)
                             {
-                                <GuessWhoPicture Item="@item" Category="@_category" IsRed="@_isRed.Value"/>
+                                <GuessWhoPicture Item="@item" OnVisibilityChanged="@(i => BoardItemChanged(i))"/>
                             }
                         </div>
 
@@ -59,8 +59,13 @@
     private GuessWhoGame _game;
     private GuessWhoCategory _category;
     private bool? _isRed;
-
+    private bool _boardChanged;
     private bool _startGameDisabled;
+
+    public void BoardItemChanged(GuessWhoBoardItem item)
+    {
+        _boardChanged = true;
+    }
 
     protected override void OnInitialized()
     {
@@ -87,6 +92,7 @@
 
         _startGameDisabled = false;
         StateHasChanged();
+        PollForGameUpdate();
     }
 
     private async Task EndGame()
@@ -106,6 +112,45 @@
         _category = GuessWhoCategory.Food;
         _isRed = null;
         _startGameDisabled = false;
+        _boardChanged = false;
         StateHasChanged();
+    }
+
+    private async void PollForGameUpdate()
+    {
+        while (_game.GameState == GameState.InProgress)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            var game = await GuessWhoService.GetCurrentGame(_category);
+            if (game.StartTimestamp != _game.StartTimestamp)
+            {
+                _game = game;
+                StateHasChanged();
+                continue;
+            }
+
+            if (game.GameState != GameState.InProgress)
+            {
+                _game.GameState = game.GameState;
+                StateHasChanged();
+                return;
+            }
+
+            if (_isRed.HasValue && _isRed.Value && _boardChanged)
+            {
+                game.RedBoard = _game.RedBoard;
+                await GuessWhoService.UpdateGameAsync(game);
+            }
+
+            if (_isRed.HasValue && !_isRed.Value && _boardChanged)
+            {
+                game.BlueBoard = _game.BlueBoard;
+                await GuessWhoService.UpdateGameAsync(game);
+            }
+            
+            _game = game;
+            _boardChanged = false;
+            StateHasChanged();
+        }
     }
 }
