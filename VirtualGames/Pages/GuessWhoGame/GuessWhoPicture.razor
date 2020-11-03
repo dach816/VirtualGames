@@ -23,7 +23,7 @@
     public GuessWhoItem Item { get; set; }
 
     [Parameter]
-    public Action<GuessWhoBoardItem> OnVisibilityChanged { get; set; }
+    public Action<GuessWhoBoardItem> OnVisibilityChanged { get; set; } = b => { };
 
     private void ToggleX()
     {

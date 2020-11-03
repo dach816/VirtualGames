@@ -19,6 +19,11 @@
                             <option value=@category.Value>@category.Text</option>
                         }
                     </select>
+                    <label class="mx-2">Number to guess:</label>
+                    <select class="col-lg-4 col-12" @onchange="@((ChangeEventArgs e) => GuessNumChange(e))">
+                        <option value=1>1</option>
+                        <option value=2>2</option>
+                    </select>
                     <div class="row justify-content-center mt-4">
                         <button class="col-lg-4 col-12 btn btn-danger mx-1" @onclick="@(async () => await StartOrJoinGame(true))">Start or Join Game as Red!</button>
                         <button class="col-lg-4 col-12 btn btn-info mx-1" @onclick="@(async () => await StartOrJoinGame(false))">Start or Join Game as Blue!</button>
@@ -42,14 +47,14 @@
 
                         <h3 class="mt-4">@(_isRed.Value ? "Blue" : "Red") is trying to guess</h3>
                         <div class="row justify-content-center">
-                            @if (_isRed.Value)
+                            @foreach (var item in _isRed.Value ? _game.RedChosenItems : _game.BlueChosenItems)
                             {
-                                <GuessWhoPicture BoardItem="@_game.RedChosenItem" Item="@(_items.FirstOrDefault(i => i.Id == _game.RedChosenItem.ItemId))" />
+                                <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))" />
                             }
-                            else
-                            {
-                                <GuessWhoPicture BoardItem="@_game.BlueChosenItem" Item="@(_items.FirstOrDefault(i => i.Id == _game.BlueChosenItem.ItemId))" />
-                            }
+                        </div>
+                        
+                        <div class="row mt-2">
+                            <textarea class="col-12" placeholder="Make notes here" rows="5"></textarea>
                         </div>
                     }
                 </div>
@@ -69,6 +74,7 @@
     private bool _boardChanged;
     private bool _startGameDisabled;
     private IEnumerable<GuessWhoItem> _items;
+    private int _numGuess = 1;
 
     public void BoardItemChanged(GuessWhoBoardItem item)
     {
@@ -85,12 +91,17 @@
         _category = (GuessWhoCategory)int.Parse(e.Value.ToString());
     }
 
+    private void GuessNumChange(ChangeEventArgs e)
+    {
+        _numGuess = int.Parse(e.Value.ToString());
+    }
+
     private async Task StartOrJoinGame(bool isRed)
     {
         _startGameDisabled = true;
         StateHasChanged();
 
-        _game = await GuessWhoService.GetOrCreateGameAsync(_category);
+        _game = await GuessWhoService.GetOrCreateGameAsync(_category, _numGuess);
         _isRed = isRed;
         if (_game.GameState == GameState.NotStarted)
         {
@@ -100,6 +111,7 @@
 
         _items = await GuessWhoService.GetAllCategoryItemsAsync(_category);
         _startGameDisabled = false;
+        _numGuess = _game.NumToGuess;
         StateHasChanged();
         PollForGameUpdate();
     }

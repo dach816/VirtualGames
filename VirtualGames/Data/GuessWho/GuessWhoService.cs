@@ -22,7 +22,7 @@ namespace VirtualGames.Data.GuessWho
             _gameRepo = gameRepo;
         }
 
-        public async Task<GuessWhoGame> GetOrCreateGameAsync(GuessWhoCategory category)
+        public async Task<GuessWhoGame> GetOrCreateGameAsync(GuessWhoCategory category, int numToGuess)
         {
             var game = (await _gameRepo.ReadAsync(GetInProgressGameQuery, category.ToString("G"))).FirstOrDefault();
             if (game != null)
@@ -42,8 +42,8 @@ namespace VirtualGames.Data.GuessWho
                     ItemId = i.Id,
                     IsVisible = true
                 }).ToList();
-            var redChosenItem = GetRandomItem(boardItems);
-            var blueChosenItem = GetRandomItem(boardItems.Where(i => i.ItemId != redChosenItem.ItemId).ToList());
+            var redChosenItems = GetRandomItems(boardItems, null, numToGuess);
+            var blueChosenItems = GetRandomItems(boardItems, redChosenItems, numToGuess);
             game = new GuessWhoGame
             {
                 Id = Guid.NewGuid().ToString(),
@@ -51,9 +51,10 @@ namespace VirtualGames.Data.GuessWho
                 Category = category.ToString("G"),
                 BlueBoard = boardItems,
                 RedBoard = boardItems,
-                RedChosenItem = redChosenItem,
-                BlueChosenItem = blueChosenItem,
+                RedChosenItems = redChosenItems,
+                BlueChosenItems = blueChosenItems,
                 IsRedTurn = false,
+                NumToGuess = numToGuess,
                 StartTimestamp = DateTime.UtcNow
             };
             await _gameRepo.CreateAsync(game, category.ToString("G"));
@@ -82,10 +83,25 @@ namespace VirtualGames.Data.GuessWho
             return items;
         }
 
-        private GuessWhoBoardItem GetRandomItem(IList<GuessWhoBoardItem> items)
+        private List<GuessWhoBoardItem> GetRandomItems(IList<GuessWhoBoardItem> items, IList<GuessWhoBoardItem> ignoreItems, int numItems)
         {
-            var index = Random.Next(items.Count);
-            return items[index];
+            if (ignoreItems == null)
+            {
+                ignoreItems = new List<GuessWhoBoardItem>();
+            }
+
+            var chosenItems = new List<GuessWhoBoardItem>();
+            for (var n = 0; n < numItems; n++)
+            {
+                var index = Random.Next(items.Count - ignoreItems.Count - chosenItems.Count);
+                var item = items
+                    .Where(i => ignoreItems.All(r => r.ItemId != i.ItemId)
+                                && chosenItems.All(r => r.ItemId != i.ItemId))
+                    .ToList()[index];
+                chosenItems.Add(item);
+            }
+
+            return chosenItems;
         }
     }
 }

@@ -13,11 +13,11 @@ namespace VirtualGames.Data.GuessWho
         [JsonProperty("isRedTurn")]
         public bool IsRedTurn { get; set; }
 
-        [JsonProperty("redChosenItem")]
-        public GuessWhoBoardItem RedChosenItem { get; set; }
+        [JsonProperty("redChosenItems")]
+        public List<GuessWhoBoardItem> RedChosenItems { get; set; }
 
-        [JsonProperty("blueChosenItem")]
-        public GuessWhoBoardItem BlueChosenItem { get; set; }
+        [JsonProperty("blueChosenItems")]
+        public List<GuessWhoBoardItem> BlueChosenItems { get; set; }
 
         [JsonProperty("redBoard")]
         public List<GuessWhoBoardItem> RedBoard { get; set; }
@@ -27,6 +27,9 @@ namespace VirtualGames.Data.GuessWho
 
         [JsonProperty("category")]
         public string Category { get; set; }
+
+        [JsonProperty("numToGuess")]
+        public int NumToGuess { get; set; }
 
         [JsonProperty("startTimestamp")]
         public DateTime StartTimestamp { get; set; }
