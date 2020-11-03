@@ -71,7 +71,7 @@ namespace VirtualGamesTest
 
         [Theory]
         [InlineData("", @"")]
-        public async Task UploadPictureAsync(string category, string pictureFolderPath)
+        public async Task UploadPicturesFromFolderAsync(string category, string pictureFolderPath)
         {
             if (!Directory.Exists(pictureFolderPath))
             {
