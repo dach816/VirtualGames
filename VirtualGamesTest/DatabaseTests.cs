@@ -92,12 +92,6 @@ namespace VirtualGamesTest
                     break;
                 }
 
-                if (id < 7)
-                {
-                    id++;
-                    continue;
-                }
-
                 var imageArray = File.ReadAllBytes(fileName);
                 var imageString = Convert.ToBase64String(imageArray);
                 var guessWhoItem = new GuessWhoItem
