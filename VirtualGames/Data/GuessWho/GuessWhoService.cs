@@ -14,7 +14,6 @@ namespace VirtualGames.Data.GuessWho
         private static readonly Random Random = new Random();
 
         private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameState <> 2 ORDER BY g.startTimestamp DESC ";
-        private const string GetLatestGameQuery = @"SELECT TOP 1 * FROM items g ORDER BY g.startTimestamp DESC ";
 
         public GuessWhoService(IRepository<GuessWhoItem> itemRepo, IRepository<GuessWhoGame> gameRepo)
         {
@@ -61,9 +60,9 @@ namespace VirtualGames.Data.GuessWho
             return game;
         }
 
-        public async Task<GuessWhoGame> GetCurrentGame(GuessWhoCategory category)
+        public async Task<GuessWhoGame> GetGame(GuessWhoCategory category, string gameId)
         {
-            return (await _gameRepo.ReadAsync(GetLatestGameQuery, category.ToString("G"))).FirstOrDefault();
+            return await _gameRepo.ReadByIdAsync(gameId, category.ToString("G"));
         }
 
         public async Task UpdateGameAsync(GuessWhoGame game)

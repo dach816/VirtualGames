@@ -35,6 +35,13 @@ namespace VirtualGames.Common
             return results;
         }
 
+        public async Task<T> ReadByIdAsync(string id, string partitionKey = "Default")
+        {
+            return await _container.ReadItemAsync<T>(
+                partitionKey: new PartitionKey(partitionKey),
+                id: id);
+        }
+
         public async Task UpdateAsync(T item, string partitionKey = "Default")
         {
             await _container.ReplaceItemAsync(

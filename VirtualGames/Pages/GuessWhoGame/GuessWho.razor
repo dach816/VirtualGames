@@ -2,6 +2,7 @@
 @using VirtualGames.Common
 @using VirtualGames.Common.Extensions
 @using VirtualGames.Data.GuessWho
+@using VirtualGames.Pages.GuessWhoGame
 @inject GuessWhoService GuessWhoService
 
 <h1 class="pb-2">Guess Who?</h1>
@@ -41,20 +42,20 @@
                         <div class="row">
                             @foreach (var item in _isRed.Value ? _game.RedBoard : _game.BlueBoard)
                             {
-                                <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))" OnVisibilityChanged="@(i => BoardItemChanged(i))"/>
+                                <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))" OnVisibilityChanged="@(i => BoardItemChanged(i))" />
                             }
+                        </div>
+
+                        <div class="row mt-2">
+                            <textarea class="col-12" placeholder="Make notes here" rows="5"></textarea>
                         </div>
 
                         <h3 class="mt-4">@(_isRed.Value ? "Blue" : "Red") is trying to guess</h3>
                         <div class="row justify-content-center">
                             @foreach (var item in _isRed.Value ? _game.RedChosenItems : _game.BlueChosenItems)
-                            {
-                                <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))" />
-                            }
-                        </div>
-                        
-                        <div class="row mt-2">
-                            <textarea class="col-12" placeholder="Make notes here" rows="5"></textarea>
+                                {
+                                    <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))" />
+                                }
                         </div>
                     }
                 </div>
@@ -142,17 +143,10 @@
         while (_game.GameState == GameState.InProgress)
         {
             await Task.Delay(TimeSpan.FromSeconds(2));
-            var game = await GuessWhoService.GetCurrentGame(_category);
+            var game = await GuessWhoService.GetGame(_category, _game.Id);
             if (game == null)
             {
                 return;
-            }
-
-            if (game.StartTimestamp != _game.StartTimestamp)
-            {
-                _game = game;
-                StateHasChanged();
-                continue;
             }
 
             if (game.GameState != GameState.InProgress)
