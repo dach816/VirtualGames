@@ -29,7 +29,7 @@ namespace VirtualGames.Data.GuessWho
                 return game;
             }
 
-            var categoryItems = await GetAllCategoryItemsAsync(category);
+            var categoryItems = await GetAllCategoryItemsAsync(category.ToString("G"));
             if (categoryItems.Count != 24)
             {
                 throw new Exception($"Need 24 items for category {category:G}.");
@@ -60,9 +60,9 @@ namespace VirtualGames.Data.GuessWho
             return game;
         }
 
-        public async Task<GuessWhoGame> GetGame(GuessWhoCategory category, string gameId)
+        public async Task<GuessWhoGame> GetGame(string category, string gameId)
         {
-            return await _gameRepo.ReadByIdAsync(gameId, category.ToString("G"));
+            return await _gameRepo.ReadByIdAsync(gameId, category);
         }
 
         public async Task UpdateGameAsync(GuessWhoGame game)
@@ -71,9 +71,9 @@ namespace VirtualGames.Data.GuessWho
             await _gameRepo.UpdateAsync(game, game.Category);
         }
         
-        public async Task<List<GuessWhoItem>> GetAllCategoryItemsAsync(GuessWhoCategory category)
+        public async Task<List<GuessWhoItem>> GetAllCategoryItemsAsync(string category)
         {
-            var items = (await _itemRepo.ReadAsync(null, category.ToString("G"))).ToList();
+            var items = (await _itemRepo.ReadAsync(null, category)).ToList();
             if (!items.Any())
             {
                 throw new Exception($"No items for category {category:G}.");

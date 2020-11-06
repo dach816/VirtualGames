@@ -1,0 +1,119 @@
+﻿@using VirtualGames.Common
+@using VirtualGames.Data.GuessWho
+@using VirtualGames.Pages.GuessWhoGame
+@inject GuessWhoService GuessWhoService
+
+<div class="card-header text-center">
+    <h1 class="@(IsRed ? "text-danger" : "text-info") text-shadow">@(IsRed ? "Red" : "Blue") Board</h1>
+</div>
+<div class="card-body text-center">
+    @if (_items != null)
+    {
+        <div class="row">
+            @foreach (var item in IsRed ? Game.RedBoard : Game.BlueBoard)
+            {
+                <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))" OnVisibilityChanged="@(i => BoardItemChanged(i))"/>
+            }
+        </div>
+
+        <div class="row mt-2">
+            <textarea class="col-12" placeholder="Make notes here" rows="5"></textarea>
+        </div>
+
+        <h3 class="mt-4">@(IsRed ? "Blue" : "Red") is trying to guess</h3>
+        <div class="row justify-content-center">
+            @foreach (var item in IsRed ? Game.RedChosenItems : Game.BlueChosenItems)
+            {
+                <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))"/>
+            }
+        </div>
+    }
+    else
+    {
+        <p>Loading...</p>
+    }
+</div>
+<div class="card-footer text-center">
+    <button class="btn btn-success" @onclick="EndGame" disabled="@_buttonsDisabled">End Game</button>
+    <button class="btn btn-secondary" @onclick="LeaveGame" disabled="@_buttonsDisabled">Leave Game</button>
+</div>
+
+@code {
+    [Parameter]
+    public GuessWhoGame Game { get; set; }
+
+    [Parameter]
+    public bool IsRed { get; set; }
+
+    [Parameter]
+    public Action OnLeaveGame { get; set; } = () => { };
+
+    private bool _boardChanged;
+    private bool _buttonsDisabled;
+    private IEnumerable<GuessWhoItem> _items;
+
+    public void BoardItemChanged(GuessWhoBoardItem item)
+    {
+        _boardChanged = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = await GuessWhoService.GetAllCategoryItemsAsync(Game.Category);
+        _boardChanged = false;
+        _buttonsDisabled = false;
+        PollForGameUpdate();
+    }
+
+    private async Task EndGame()
+    {
+        _buttonsDisabled = true;
+        Game.GameState = GameState.Finished;
+        OnLeaveGame();
+        await GuessWhoService.UpdateGameAsync(Game);
+        _buttonsDisabled = false;
+    }
+
+    private void LeaveGame()
+    {
+        _buttonsDisabled = true;
+        OnLeaveGame();
+        _buttonsDisabled = false;
+    }
+
+    private async void PollForGameUpdate()
+    {
+        while (Game.GameState == GameState.InProgress)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            var game = await GuessWhoService.GetGame(Game.Category, Game.Id);
+            if (game == null)
+            {
+                return;
+            }
+
+            if (game.GameState != GameState.InProgress)
+            {
+                Game.GameState = game.GameState;
+                StateHasChanged();
+                return;
+            }
+
+            if (IsRed && _boardChanged)
+            {
+                game.RedBoard = Game.RedBoard;
+                await GuessWhoService.UpdateGameAsync(game);
+            }
+
+            if (!IsRed && _boardChanged)
+            {
+                game.BlueBoard = Game.BlueBoard;
+                await GuessWhoService.UpdateGameAsync(game);
+            }
+
+            Game = game;
+            _boardChanged = false;
+            StateHasChanged();
+        }
+    }
+}
