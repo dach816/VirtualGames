@@ -1,7 +1,7 @@
 ﻿@using VirtualGames.Data.GuessWho
 @inject GuessWhoService GuessWhoService
 
-<div class="col-lg-2 col-4 text-center">
+<div class="col-lg-2 col-6 text-center">
     <a href="javascript:void(0);" @onclick="ToggleX">
         <img src="@Item.Picture" alt="@Item.Name" width="100" height="90" style="opacity: @(BoardItem.IsVisible ? 1 : 0.1)" />
     </a>

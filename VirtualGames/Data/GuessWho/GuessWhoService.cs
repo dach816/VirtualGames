@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VirtualGames.Common;
+using VirtualGames.Common.Extensions;
 using VirtualGames.Common.Interface;
 
 namespace VirtualGames.Data.GuessWho
@@ -14,6 +15,7 @@ namespace VirtualGames.Data.GuessWho
         private static readonly Random Random = new Random();
 
         private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameState <> 2 ORDER BY g.startTimestamp DESC ";
+        private const string GetInProgressGamesQuery = @"SELECT * FROM items g WHERE g.gameState = 1 ORDER BY g.startTimestamp DESC ";
 
         public GuessWhoService(IRepository<GuessWhoItem> itemRepo, IRepository<GuessWhoGame> gameRepo)
         {
@@ -60,9 +62,22 @@ namespace VirtualGames.Data.GuessWho
             return game;
         }
 
-        public async Task<GuessWhoGame> GetGame(string category, string gameId)
+        public async Task<GuessWhoGame> GetGameAsync(string category, string gameId)
         {
             return await _gameRepo.ReadByIdAsync(gameId, category);
+        }
+
+        public async Task<IEnumerable<GuessWhoGame>> GetAllGamesAsync()
+        {
+            var categories = GuessWhoCategory.Avatar.ToStringList();
+            var allGames = new List<GuessWhoGame>();
+            foreach (var category in categories)
+            {
+                var games = await _gameRepo.ReadAsync(GetInProgressGamesQuery, category);
+                allGames.AddRange(games);
+            }
+
+            return allGames;
         }
 
         public async Task UpdateGameAsync(GuessWhoGame game)

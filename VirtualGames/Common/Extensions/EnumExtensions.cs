@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
@@ -30,6 +31,13 @@ namespace VirtualGames.Common.Extensions
                 .First()
                 .GetCustomAttribute<DescriptionAttribute>();
             return member == null ? string.Empty : member.Description;
+        }
+
+        public static IEnumerable<string> ToStringList<T>(this T obj)
+        {
+            return Enum.GetValues(typeof(T))
+                .OfType<Enum>()
+                .Select(x => x.ToString("G"));
         }
     }
 }

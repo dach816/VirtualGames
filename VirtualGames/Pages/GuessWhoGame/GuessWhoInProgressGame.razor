@@ -86,7 +86,7 @@
         while (Game.GameState == GameState.InProgress)
         {
             await Task.Delay(TimeSpan.FromSeconds(2));
-            var game = await GuessWhoService.GetGame(Game.Category, Game.Id);
+            var game = await GuessWhoService.GetGameAsync(Game.Category, Game.Id);
             if (game == null)
             {
                 return;
