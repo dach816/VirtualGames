@@ -82,7 +82,6 @@ namespace VirtualGames.Data.GuessWho
 
         public async Task UpdateGameAsync(GuessWhoGame game)
         {
-
             await _gameRepo.UpdateAsync(game, game.Category);
         }
         
