@@ -1,4 +1,4 @@
-﻿namespace VirtualGames.Common
+﻿namespace VirtualGames.Common.Enums
 {
     public enum GameState
     {

@@ -1,6 +1,6 @@
-﻿@using VirtualGames.Common
+﻿@using VirtualGames.Common.Enums
+@using VirtualGames.Data
 @using VirtualGames.Data.GuessWho
-@using VirtualGames.Pages.GuessWhoGame
 @inject GuessWhoService GuessWhoService
 
 <div class="card-header text-center">
@@ -10,7 +10,7 @@
     @if (_items != null)
     {
         <div class="row">
-            @foreach (var item in IsRed ? Game.RedBoard : Game.BlueBoard)
+            @foreach (var item in IsRed ? Game.GetContentAs<GuessWhoGame>().RedBoard : Game.GetContentAs<GuessWhoGame>().BlueBoard)
             {
                 <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))" OnVisibilityChanged="@(i => BoardItemChanged(i))"/>
             }
@@ -22,7 +22,7 @@
 
         <h3 class="mt-4">@(IsRed ? "Blue" : "Red") is trying to guess</h3>
         <div class="row justify-content-center">
-            @foreach (var item in IsRed ? Game.RedChosenItems : Game.BlueChosenItems)
+            @foreach (var item in IsRed ? Game.GetContentAs<GuessWhoGame>().RedChosenItems : Game.GetContentAs<GuessWhoGame>().BlueChosenItems)
             {
                 <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))"/>
             }
@@ -40,7 +40,7 @@
 
 @code {
     [Parameter]
-    public GuessWhoGame Game { get; set; }
+    public Game Game { get; set; }
 
     [Parameter]
     public bool IsRed { get; set; }
@@ -59,7 +59,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _items = await GuessWhoService.GetAllCategoryItemsAsync(Game.Category);
+        _items = await GuessWhoService.GetAllCategoryItemsAsync(Game.GetContentAs<GuessWhoGame>().Category);
         _boardChanged = false;
         _buttonsDisabled = false;
         PollForGameUpdate();
@@ -68,9 +68,10 @@
     private async Task EndGame()
     {
         _buttonsDisabled = true;
-        Game.GameState = GameState.Finished;
+        var guessWhoGame = Game.GetContentAs<GuessWhoGame>();
+        guessWhoGame.GameState = GameState.Finished;
+        await GuessWhoService.UpdateGameAsync(Game.Id, guessWhoGame);
         OnLeaveGame();
-        await GuessWhoService.UpdateGameAsync(Game);
         _buttonsDisabled = false;
     }
 
@@ -83,35 +84,38 @@
 
     private async void PollForGameUpdate()
     {
-        while (Game.GameState == GameState.InProgress)
+        var gameContent = Game.GetContentAs<GuessWhoGame>();
+        while (gameContent.GameState == GameState.InProgress)
         {
             await Task.Delay(TimeSpan.FromSeconds(2));
-            var game = await GuessWhoService.GetGameAsync(Game.Category, Game.Id);
-            if (game == null)
+            var lastSavedGame = await GuessWhoService.GetGameAsync(Game.Id);
+            if (lastSavedGame == null)
             {
                 return;
             }
 
-            if (game.GameState != GameState.InProgress)
+            var lastSavedGameContent = lastSavedGame.GetContentAs<GuessWhoGame>();
+            if (gameContent.GameState != GameState.InProgress)
             {
-                Game.GameState = game.GameState;
+                gameContent.GameState = lastSavedGameContent.GameState;
+                Game.GameContent = gameContent;
                 StateHasChanged();
                 return;
             }
 
             if (IsRed && _boardChanged)
             {
-                game.RedBoard = Game.RedBoard;
-                await GuessWhoService.UpdateGameAsync(game);
+                lastSavedGameContent.RedBoard = gameContent.RedBoard;
+                await GuessWhoService.UpdateGameAsync(Game.Id, lastSavedGameContent);
             }
 
             if (!IsRed && _boardChanged)
             {
-                game.BlueBoard = Game.BlueBoard;
-                await GuessWhoService.UpdateGameAsync(game);
+                lastSavedGameContent.BlueBoard = gameContent.BlueBoard;
+                await GuessWhoService.UpdateGameAsync(Game.Id, lastSavedGameContent);
             }
 
-            Game = game;
+            Game.GameContent = lastSavedGameContent;
             _boardChanged = false;
             StateHasChanged();
         }
