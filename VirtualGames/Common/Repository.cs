@@ -10,21 +10,23 @@ namespace VirtualGames.Common
         where T : BaseDataItem
     {
         private readonly Container _container;
+        private string _partitionKey;
 
         public Repository(CosmosClient client, string databaseName)
         {
             var database = client.GetDatabase(databaseName);
             _container = database.GetContainer(typeof(T).Name);
+            _partitionKey = "Default";
         }
 
-        public async Task<IEnumerable<T>> ReadAsync(string query, string partitionKey = "Default")
+        public async Task<IEnumerable<T>> ReadAsync(string query)
         {
             var results = new List<T>();
             using var resultSet = _container.GetItemQueryIterator<T>(
                 string.IsNullOrEmpty(query) ? null : new QueryDefinition(query),
                 requestOptions: new QueryRequestOptions
                 {
-                    PartitionKey = new PartitionKey(partitionKey)
+                    PartitionKey = new PartitionKey(_partitionKey)
                 });
             while (resultSet.HasMoreResults)
             {
@@ -35,29 +37,34 @@ namespace VirtualGames.Common
             return results;
         }
 
-        public async Task<T> ReadByIdAsync(string id, string partitionKey = "Default")
+        public async Task<T> ReadByIdAsync(string id)
         {
             return await _container.ReadItemAsync<T>(
-                partitionKey: new PartitionKey(partitionKey),
+                partitionKey: new PartitionKey(_partitionKey),
                 id: id);
         }
 
-        public async Task UpdateAsync(T item, string partitionKey = "Default")
+        public async Task UpdateAsync(T item)
         {
             await _container.ReplaceItemAsync(
-                partitionKey: new PartitionKey(partitionKey),
+                partitionKey: new PartitionKey(_partitionKey),
                 id: item.Id,
                 item: item);
         }
 
-        public async Task<T> CreateAsync(T item, string partitionKey = "Default")
+        public async Task<T> CreateAsync(T item)
         {
-            return await _container.CreateItemAsync(item, new PartitionKey(partitionKey));
+            return await _container.CreateItemAsync(item, new PartitionKey(_partitionKey));
         }
 
-        public async Task<T> DeleteAsync(T item, string partitionKey = "Default")
+        public async Task<T> DeleteAsync(T item)
         {
-            return await _container.DeleteItemAsync<T>(item.Id, new PartitionKey(partitionKey));
+            return await _container.DeleteItemAsync<T>(item.Id, new PartitionKey(_partitionKey));
+        }
+
+        public void SetPartitionKey(string key)
+        {
+            _partitionKey = key;
         }
     }
 }

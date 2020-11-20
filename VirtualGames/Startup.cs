@@ -31,10 +31,9 @@ namespace VirtualGames
 
             // Database
             var dbConfig = Configuration.GetSection("CosmosDb");
+            services.AddSingleton<IRepository<Game>>(InitializeCosmosClientInstanceAsync<Game>(dbConfig));
             services.AddSingleton<IRepository<Password>>(InitializeCosmosClientInstanceAsync<Password>(dbConfig));
-            services.AddSingleton<IRepository<PasswordGame>>(InitializeCosmosClientInstanceAsync<PasswordGame>(dbConfig));
             services.AddSingleton<IRepository<GuessWhoItem>>(InitializeCosmosClientInstanceAsync<GuessWhoItem>(dbConfig));
-            services.AddSingleton<IRepository<GuessWhoGame>>(InitializeCosmosClientInstanceAsync<GuessWhoGame>(dbConfig));
 
             // Services
             services.AddSingleton<PasswordService>();

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using VirtualGames.Common;
+using VirtualGames.Common.Enums;
 
 namespace VirtualGames.Data.Password
 {
-    public class PasswordGame : BaseDataItem
+    public class PasswordGame : IGameContent
     {
         [JsonProperty("passwords")]
         public List<string> Passwords { get; set; }
@@ -21,9 +21,6 @@ namespace VirtualGames.Data.Password
 
         [JsonProperty("gameState")]
         public GameState GameState { get; set; }
-
-        [JsonProperty("category")]
-        public string Category { get; set; }
 
         [JsonProperty("startTimestamp")]
         public DateTime StartTimestamp { get; set; }

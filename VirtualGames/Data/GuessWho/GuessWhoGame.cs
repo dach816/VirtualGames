@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using VirtualGames.Common;
+using VirtualGames.Common.Enums;
 
 namespace VirtualGames.Data.GuessWho
 {
-    public class GuessWhoGame : BaseDataItem
+    public class GuessWhoGame : IGameContent
     {
         [JsonProperty("gameState")]
         public GameState GameState { get; set; }
@@ -26,7 +26,7 @@ namespace VirtualGames.Data.GuessWho
         public List<GuessWhoBoardItem> BlueBoard { get; set; }
 
         [JsonProperty("category")]
-        public string Category { get; set; }
+        public GuessWhoCategory Category { get; set; }
 
         [JsonProperty("numToGuess")]
         public int NumToGuess { get; set; }
