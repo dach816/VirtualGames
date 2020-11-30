@@ -3,6 +3,7 @@
     public enum GameType
     {
         Password,
-        GuessWho
+        GuessWho,
+        Boggle
     }
 }

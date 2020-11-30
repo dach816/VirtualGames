@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using VirtualGames.Common;
+using VirtualGames.Common.Enums;
 
 namespace VirtualGames.Data.Boggle
 {
-    public class BoggleGame : BaseDataItem
+    public class BoggleGame : IGameContent
     {
         [JsonProperty("letters")]
         public List<string> Letters { get; set; }

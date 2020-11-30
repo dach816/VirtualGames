@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using VirtualGames.Common;
+using VirtualGames.Common.Enums;
 using VirtualGames.Common.Interface;
 
 namespace VirtualGames.Data.Boggle
@@ -10,18 +9,18 @@ namespace VirtualGames.Data.Boggle
     public class BoggleService
     {
         private readonly IRepository<BoggleDie> _diceRepo;
-        private readonly IRepository<BoggleGame> _gameRepo;
+        private readonly IRepository<Game> _gameRepo;
         private static readonly Random Random = new Random();
 
         private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameState <> 2 ORDER BY g.startTimestamp DESC ";
 
-        public BoggleService(IRepository<BoggleDie> diceRepo, IRepository<BoggleGame> gameRepo)
+        public BoggleService(IRepository<BoggleDie> diceRepo, IRepository<Game> gameRepo)
         {
             _diceRepo = diceRepo;
             _gameRepo = gameRepo;
         }
 
-        public async Task<BoggleGame> GetOrCreateGameAsync()
+        public async Task<Game> GetOrCreateGameAsync()
         {
             var game = (await _gameRepo.ReadAsync(GetInProgressGameQuery)).FirstOrDefault();
             if (game != null)
@@ -36,19 +35,30 @@ namespace VirtualGames.Data.Boggle
                 return d.PossibleLetters[index];
             }).ToList();
 
-            game = new BoggleGame
+            game = new Game
             {
                 Id = Guid.NewGuid().ToString(),
-                GameState = GameState.NotStarted,
-                StartTimestamp = DateTime.UtcNow,
-                Letters = letters
+                Category = GameType.Boggle.ToString("G"),
+                GameContent = new BoggleGame
+                {
+                    GameState = GameState.NotStarted,
+                    StartTimestamp = DateTime.UtcNow,
+                    Letters = letters
+                }
             };
             await _gameRepo.CreateAsync(game);
             return game;
         }
 
-        public async Task UpdateGameAsync(BoggleGame game)
+        public async Task<Game> GetGameAsync(string gameId)
         {
+            return await _gameRepo.ReadByIdAsync(gameId);
+        }
+
+        public async Task UpdateGameAsync(string gameId, BoggleGame boggleGame)
+        {
+            var game = await _gameRepo.ReadByIdAsync(gameId);
+            game.GameContent = boggleGame;
             await _gameRepo.UpdateAsync(game);
         }
     }

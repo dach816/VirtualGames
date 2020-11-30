@@ -1,0 +1,114 @@
+﻿@using VirtualGames.Common.Enums
+@using VirtualGames.Data
+@using VirtualGames.Data.Boggle
+@inject BoggleService Service
+
+<div class="card-body text-center">
+    @if (_letters != null)
+    {
+        <div class="row">
+            @foreach (var letter in Game.GetContentAs<BoggleGame>().Letters)
+            {
+                <BoggleDieComponent Letter="@letter" />
+            }
+        </div>
+    }
+    else
+    {
+        <p>Loading...</p>
+    }
+</div>
+<div class="card-footer text-center">
+    <button class="btn btn-success" @onclick="EndGame" disabled="@_buttonsDisabled">End Game</button>
+</div>
+
+@code {
+    private List<string> _letters;
+    private bool _buttonsDisabled;
+    private TimeSpan _timer;
+
+    [Parameter]
+    public Game Game { get; set; }
+
+    [Parameter]
+    public Action OnLeaveGame { get; set; } = () => { };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var gameContent = Game.GetContentAs<BoggleGame>();
+        _letters = gameContent.Letters;
+        _buttonsDisabled = false;
+        _timer = TimeSpan.FromMinutes(2).Subtract(DateTime.Now.Subtract(gameContent.StartTimestamp));
+        PollForGameUpdate();
+    }
+
+    private async Task EndGame()
+    {
+        _buttonsDisabled = true;
+        var boggleGame = Game.GetContentAs<BoggleGame>();
+        boggleGame.GameState = GameState.Finished;
+        await Service.UpdateGameAsync(Game.Id, boggleGame);
+        OnLeaveGame();
+        _buttonsDisabled = false;
+    }
+
+    private async void PollForGameUpdate()
+    {
+        var gameContent = Game.GetContentAs<BoggleGame>();
+        while (gameContent.GameState == GameState.InProgress)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            var lastSavedGame = await Service.GetGameAsync(Game.Id);
+            if (lastSavedGame == null)
+            {
+                return;
+            }
+
+            var lastSavedGameContent = lastSavedGame.GetContentAs<BoggleGame>();
+            if (gameContent.GameState != GameState.InProgress)
+            {
+                gameContent.GameState = lastSavedGameContent.GameState;
+                Game.GameContent = gameContent;
+                StateHasChanged();
+                return;
+            }
+
+            Game.GameContent = lastSavedGameContent;
+            StateHasChanged();
+        }
+    }
+
+    async void CountDown()
+    {
+        var lastSavedGame = await Service.GetGameAsync(Game.Id);
+        if (lastSavedGame == null)
+        {
+            return;
+        }
+
+        while (_timer.TotalSeconds > 0)
+        {
+            lastSavedGame = await Service.GetGameAsync(Game.Id);
+            if (lastSavedGame == null)
+            {
+                return;;
+            }
+
+            var gameContent = lastSavedGame.GetContentAs<BoggleGame>();
+            if (gameContent.GameState == GameState.Finished)
+            {
+                break;
+            }
+
+
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            _timer = _timer.Add(new TimeSpan(0, 0, 0, -1));
+            StateHasChanged();
+        }
+
+        var gameContent = lastSavedGame?.GetContentAs<BoggleGame>();
+        gameContent.GameState = GameState.Finished;
+        await Service.UpdateGameAsync(Game.Id, gameContent);
+        StateHasChanged();
+    }
+}

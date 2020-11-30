@@ -8224,3 +8224,9 @@ a.text-dark:hover, a.text-dark:focus {
     right: 0.75rem;
     top: 0.5rem;
 }
+
+.square:before {
+    content: "";
+    display: block;
+    padding-top: 100%;
+}
