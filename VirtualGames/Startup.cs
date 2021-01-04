@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using VirtualGames.Common;
 using VirtualGames.Common.Interface;
 using VirtualGames.Data;
+using VirtualGames.Data.Boggle;
 using VirtualGames.Data.GuessWho;
 using VirtualGames.Data.Password;
 
@@ -34,10 +35,12 @@ namespace VirtualGames
             services.AddSingleton<IRepository<Game>>(InitializeCosmosClientInstanceAsync<Game>(dbConfig));
             services.AddSingleton<IRepository<Password>>(InitializeCosmosClientInstanceAsync<Password>(dbConfig));
             services.AddSingleton<IRepository<GuessWhoItem>>(InitializeCosmosClientInstanceAsync<GuessWhoItem>(dbConfig));
+            services.AddSingleton<IRepository<BoggleDie>>(InitializeCosmosClientInstanceAsync<BoggleDie>(dbConfig));
 
             // Services
             services.AddSingleton<PasswordService>();
             services.AddSingleton<GuessWhoService>();
+            services.AddSingleton<BoggleService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

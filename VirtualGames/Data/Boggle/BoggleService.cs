@@ -18,6 +18,7 @@ namespace VirtualGames.Data.Boggle
         {
             _diceRepo = diceRepo;
             _gameRepo = gameRepo;
+            _gameRepo.SetPartitionKey("Boggle");
         }
 
         public async Task<Game> GetOrCreateGameAsync()

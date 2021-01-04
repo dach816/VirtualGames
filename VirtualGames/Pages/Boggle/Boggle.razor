@@ -1,12 +1,55 @@
 ﻿@page "/boggle"
+@using VirtualGames.Common.Enums
 @using VirtualGames.Data
 @using VirtualGames.Data.Boggle
 @inject BoggleService Service
 
 <h1 class="pb-2">Boggle</h1>
 
-
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="card col-10 border border-primary">
+            @if (_game != null && _game.GetContentAs<BoggleGame>().GameState == GameState.InProgress)
+            {
+                <BoggleInProgress Game="@_game" OnLeaveGame="@(() => LeaveGame())"/>
+            }
+            else
+            {
+                <div class="card-body text-center">
+                    <h3>Let's start a new game!</h3>
+                    <button class="btn btn-primary mt-4" @onclick="@(async () => await StartGameAsync())" disabled="@_startGameDisabled">Start game!</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
+    private Game _game;
+    private bool _startGameDisabled;
 
+    private async Task StartGameAsync()
+    {
+        _startGameDisabled = true;
+        StateHasChanged();
+
+        _game = await Service.GetOrCreateGameAsync();
+        var boggleGame = _game.GetContentAs<BoggleGame>();
+        if (boggleGame.GameState == GameState.NotStarted)
+        {
+            boggleGame.GameState = GameState.InProgress;
+            _game.GameContent = boggleGame;
+            await Service.UpdateGameAsync(_game.Id, boggleGame);
+        }
+
+        _startGameDisabled = false;
+        StateHasChanged();
+    }
+
+    private async void LeaveGame()
+    {
+        _game = null;
+        _startGameDisabled = false;
+        StateHasChanged();
+    }
 }

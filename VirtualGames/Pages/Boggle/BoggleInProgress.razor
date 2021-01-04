@@ -4,13 +4,21 @@
 @inject BoggleService Service
 
 <div class="card-body text-center">
-    @if (_letters != null)
+    @if (Game?.GetContentAs<BoggleGame>()?.Letters != null)
     {
-        <div class="row">
-            @foreach (var letter in Game.GetContentAs<BoggleGame>().Letters)
-            {
-                <BoggleDieComponent Letter="@letter" />
-            }
+        @foreach (var letterRow in GetLetterRows())
+        {
+            <div class="row justify-content-center">
+                @foreach (var letter in letterRow)
+                {
+                    <div class="col-auto square border border-light text-center">
+                        <BoggleDieComponent Letter="@letter"/>
+                    </div>
+                }
+            </div>
+        }
+        <div class="row justify-content-center">
+            <div class="col-lg-4 col-12 mt-2">Time left: @_timer.ToString(@"mm\:ss")</div>
         </div>
     }
     else
@@ -23,7 +31,6 @@
 </div>
 
 @code {
-    private List<string> _letters;
     private bool _buttonsDisabled;
     private TimeSpan _timer;
 
@@ -33,13 +40,12 @@
     [Parameter]
     public Action OnLeaveGame { get; set; } = () => { };
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         var gameContent = Game.GetContentAs<BoggleGame>();
-        _letters = gameContent.Letters;
         _buttonsDisabled = false;
-        _timer = TimeSpan.FromMinutes(2).Subtract(DateTime.Now.Subtract(gameContent.StartTimestamp));
-        PollForGameUpdate();
+        _timer = TimeSpan.FromMinutes(2).Subtract(DateTime.UtcNow.Subtract(gameContent.StartTimestamp));
+        CountDown();
     }
 
     private async Task EndGame()
@@ -50,32 +56,6 @@
         await Service.UpdateGameAsync(Game.Id, boggleGame);
         OnLeaveGame();
         _buttonsDisabled = false;
-    }
-
-    private async void PollForGameUpdate()
-    {
-        var gameContent = Game.GetContentAs<BoggleGame>();
-        while (gameContent.GameState == GameState.InProgress)
-        {
-            await Task.Delay(TimeSpan.FromSeconds(2));
-            var lastSavedGame = await Service.GetGameAsync(Game.Id);
-            if (lastSavedGame == null)
-            {
-                return;
-            }
-
-            var lastSavedGameContent = lastSavedGame.GetContentAs<BoggleGame>();
-            if (gameContent.GameState != GameState.InProgress)
-            {
-                gameContent.GameState = lastSavedGameContent.GameState;
-                Game.GameContent = gameContent;
-                StateHasChanged();
-                return;
-            }
-
-            Game.GameContent = lastSavedGameContent;
-            StateHasChanged();
-        }
     }
 
     async void CountDown()
@@ -91,11 +71,11 @@
             lastSavedGame = await Service.GetGameAsync(Game.Id);
             if (lastSavedGame == null)
             {
-                return;;
+                return;
             }
 
-            var gameContent = lastSavedGame.GetContentAs<BoggleGame>();
-            if (gameContent.GameState == GameState.Finished)
+            var savedGameContent = lastSavedGame.GetContentAs<BoggleGame>();
+            if (savedGameContent.GameState == GameState.Finished)
             {
                 break;
             }
@@ -110,5 +90,21 @@
         gameContent.GameState = GameState.Finished;
         await Service.UpdateGameAsync(Game.Id, gameContent);
         StateHasChanged();
+    }
+
+    IEnumerable<IEnumerable<string>> GetLetterRows()
+    {
+        var letters = Game.GetContentAs<BoggleGame>().Letters;
+        var row1 = letters.Take(4);
+        var row2 = letters.Skip(4).Take(4);
+        var row3 = letters.Skip(8).Take(4);
+        var row4 = letters.Skip(12);
+        return new List<IEnumerable<string>>
+        {
+            row1,
+            row2,
+            row3,
+            row4
+        };
     }
 }
