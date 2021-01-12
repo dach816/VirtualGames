@@ -12,7 +12,7 @@ namespace VirtualGames.Data.Boggle
         private readonly IRepository<Game> _gameRepo;
         private static readonly Random Random = new Random();
 
-        private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameState <> 2 ORDER BY g.startTimestamp DESC ";
+        private const string GetInProgressGameQuery = @"SELECT TOP 1 * FROM items g WHERE g.gameContent.gameState <> 2 ORDER BY g.gameContent.startTimestamp DESC ";
 
         public BoggleService(IRepository<BoggleDie> diceRepo, IRepository<Game> gameRepo)
         {

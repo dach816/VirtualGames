@@ -6,25 +6,37 @@
 <div class="card-body text-center">
     @if (Game?.GetContentAs<BoggleGame>()?.Letters != null)
     {
-        @foreach (var letterRow in GetLetterRows())
-        {
-            <div class="row justify-content-center">
-                @foreach (var letter in letterRow)
-                {
-                    <div class="col-auto square border border-light text-center">
-                        <BoggleDieComponent Letter="@letter"/>
-                    </div>
-                }
-            </div>
-        }
+        <div class="offset-2 col-8">
+            @foreach (var letterRow in GetLetterRows())
+            {
+                <div class="row justify-content-center">
+                    @foreach (var letter in letterRow)
+                    {
+                        <div class="col-3 border @(_timer.TotalSeconds <= 0 ? "border-danger" : "border-light")">
+                            <BoggleDieComponent Letter="@letter" />
+                        </div>
+                    }
+                </div>
+            }
+        </div>
         <div class="row justify-content-center">
             <div class="col-lg-4 col-12 mt-2">Time left: @_timer.ToString(@"mm\:ss")</div>
+        </div>
+        <div class="row justify-content-center">
+            @if (_timer.TotalSeconds <= 0)
+            {
+                <h2 class="col-lg-4 col-12 text-danger">Time's up!</h2>
+            }
         </div>
     }
     else
     {
         <p>Loading...</p>
     }
+    
+    <div class="row mt-2">
+        <textarea class="col-12" placeholder="Write words here..." rows="5"></textarea>
+    </div>
 </div>
 <div class="card-footer text-center">
     <button class="btn btn-success" @onclick="EndGame" disabled="@_buttonsDisabled">End Game</button>
@@ -45,6 +57,11 @@
         var gameContent = Game.GetContentAs<BoggleGame>();
         _buttonsDisabled = false;
         _timer = TimeSpan.FromMinutes(2).Subtract(DateTime.UtcNow.Subtract(gameContent.StartTimestamp));
+        if (_timer.TotalSeconds < 0)
+        {
+            _timer = TimeSpan.Zero;
+        }
+
         CountDown();
     }
 
@@ -86,9 +103,6 @@
             StateHasChanged();
         }
 
-        var gameContent = lastSavedGame?.GetContentAs<BoggleGame>();
-        gameContent.GameState = GameState.Finished;
-        await Service.UpdateGameAsync(Game.Id, gameContent);
         StateHasChanged();
     }
 
