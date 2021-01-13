@@ -21,10 +21,10 @@ else
     public bool ShowAnswer { get; set; }
 
     [Parameter]
-    public Action OnChooseAnswer { get; set; } = () => { };
+    public Action<bool> OnChooseAnswer { get; set; } = (c) => { };
 
     private void ChooseAnswer()
     {
-        OnChooseAnswer();
+        OnChooseAnswer(IsCorrect);
     }
 }

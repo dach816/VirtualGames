@@ -49,10 +49,15 @@
                     {
                         foreach (var (choice, isCorrect) in _choices)
                         {
-                            <TriviaAnswerButton Answer="@choice" IsCorrect="@isCorrect" ShowAnswer="@_showAnswers" OnChooseAnswer="@(() => ShowAnswers())"/>
+                            <TriviaAnswerButton Answer="@choice" IsCorrect="@isCorrect" ShowAnswer="@_showAnswers" OnChooseAnswer="@((c) => ShowAnswers(c))"/>
                         }
                     }
                 </div>
+
+                @if (_showAnswers)
+                {
+                    <h2 class="text-center">@(_isCorrect ? "Correct!" : "Incorrect!")</h2>
+                }
             }
         </div>
     </div>
@@ -78,7 +83,7 @@
     private string _sessionToken;
     private TriviaResult _question;
     private IEnumerable<(string, bool)> _choices;
-    private string _answer;
+    private bool _isCorrect;
     private bool _showAnswers;
 
     protected override async Task OnInitializedAsync()
@@ -110,13 +115,13 @@
 
         answers = answers.OrderBy(a => Guid.NewGuid()).ToList();
         _choices = answers.Select(a => ($"{_indexToLetterDict[answers.IndexOf(a)]}. {a}", a.Equals(HttpUtility.HtmlDecode(_question.CorrectAnswer))));
-        _answer = null;
         _showAnswers = false;
     }
 
-    private void ShowAnswers()
+    private void ShowAnswers(bool isCorrect)
     {
         _showAnswers = true;
+        _isCorrect = isCorrect;
         StateHasChanged();
     }
 }
