@@ -1,0 +1,122 @@
+﻿@using System.Web
+@using VirtualGames.Data.Trivia
+@using System.Net.Http
+@page "/trivia"
+@inject HttpClient Http
+
+<h3>Trivia Game</h3>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="card col-10 border border-primary">
+            @if (_categories != null)
+            {
+                <div class="mt-4">
+                    <h5>Category</h5>
+                    <select @bind="_selectedCategoryId">
+                        <option value="0">Random Category</option>
+                        @foreach (var category in _categories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @if (_difficulties != null)
+            {
+                <div class="mt-4">
+                    <h5>Difficulty</h5>
+                    <select @bind="_selectedDifficulty">
+                        <option value="">Random Difficulty</option>
+                        @foreach (var difficulty in _difficulties)
+                        {
+                            <option value="@difficulty">@difficulty</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            <button class="mt-5 mb-3" @onclick="GetQuestion">Get Question</button>
+
+            @if (_question != null)
+            {
+                <div class="card mt-2">
+                    <p>Question:</p>
+                    <p class="mb-1">@HttpUtility.HtmlDecode(_question.Question)</p>
+
+                    @if (_choices != null && _choices.Count() == 4)
+                    {
+                        foreach (var (choice, isCorrect) in _choices)
+                        {
+                            <TriviaAnswerButton Answer="@choice" IsCorrect="@isCorrect" ShowAnswer="@_showAnswers" OnChooseAnswer="@(() => ShowAnswers())"/>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<TriviaCategory> _categories;
+    private readonly IEnumerable<string> _difficulties = new List<string>
+{
+        "easy",
+        "medium",
+        "hard"
+    };
+    private readonly Dictionary<int, string> _indexToLetterDict = new Dictionary<int, string>
+{
+        { 0, "A" },
+        { 1, "B" },
+        { 2, "C" },
+        { 3, "D" }
+    };
+    private int _selectedCategoryId;
+    private string _selectedDifficulty;
+    private string _sessionToken;
+    private TriviaResult _question;
+    private IEnumerable<(string, bool)> _choices;
+    private string _answer;
+    private bool _showAnswers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var categories = await Http.GetJsonAsync<TriviaCategories>("https://opentdb.com/api_category.php");
+        _categories = categories.Categories;
+
+        var token = await Http.GetJsonAsync<TriviaSessionToken>("https://opentdb.com/api_token.php?command=request");
+        _sessionToken = token.Token;
+    }
+
+    private async Task GetQuestion()
+    {
+        var url = $"https://opentdb.com/api.php?amount=1&type=multiple&token={_sessionToken}";
+        if (_selectedCategoryId > 0)
+        {
+            url += $"&category={_selectedCategoryId}";
+        }
+
+        if (!string.IsNullOrEmpty(_selectedDifficulty))
+        {
+            url += $"&difficulty={_selectedDifficulty}";
+        }
+
+        var response = await Http.GetJsonAsync<TriviaResponse>(url);
+        _question = response.Results.FirstOrDefault();
+        var answers = _question.IncorrectAnswers.Select(a => HttpUtility.HtmlDecode(a)).ToList();
+        answers.Add(HttpUtility.HtmlDecode(_question.CorrectAnswer));
+
+        answers = answers.OrderBy(a => Guid.NewGuid()).ToList();
+        _choices = answers.Select(a => ($"{_indexToLetterDict[answers.IndexOf(a)]}. {a}", a.Equals(HttpUtility.HtmlDecode(_question.CorrectAnswer))));
+        _answer = null;
+        _showAnswers = false;
+    }
+
+    private void ShowAnswers()
+    {
+        _showAnswers = true;
+        StateHasChanged();
+    }
+}

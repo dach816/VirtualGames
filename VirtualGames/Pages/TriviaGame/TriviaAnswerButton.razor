@@ -1,0 +1,30 @@
+﻿@if (!ShowAnswer)
+{
+    <div class="btn btn-dark text-left pl-1" @onclick="ChooseAnswer">@Answer</div>
+}
+else
+{
+    <p class="border @(IsCorrect ? "border-success" : "border-danger")">
+        <div class="pl-1">@Answer</div>
+    </p>
+}
+
+@code
+{
+    [Parameter]
+    public string Answer { get; set; }
+
+    [Parameter]
+    public bool IsCorrect { get; set; }
+
+    [Parameter]
+    public bool ShowAnswer { get; set; }
+
+    [Parameter]
+    public Action OnChooseAnswer { get; set; } = () => { };
+
+    private void ChooseAnswer()
+    {
+        OnChooseAnswer();
+    }
+}
