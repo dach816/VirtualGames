@@ -1,4 +1,5 @@
 ﻿@using VirtualGames.Common.Enums
+@using VirtualGames.Common.Extensions
 @using VirtualGames.Data
 @using VirtualGames.Data.GuessWho
 @inject GuessWhoService GuessWhoService
@@ -10,7 +11,7 @@
     @if (_items != null)
     {
         <div class="row">
-            @foreach (var item in IsRed ? Game.GetContentAs<GuessWhoGame>().RedBoard : Game.GetContentAs<GuessWhoGame>().BlueBoard)
+            @foreach (var item in IsRed ? Game.GetGuessWhoContent().RedBoard : Game.GetGuessWhoContent().BlueBoard)
             {
                 <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))" OnVisibilityChanged="@(i => BoardItemChanged(i))"/>
             }
@@ -22,7 +23,7 @@
 
         <h3 class="mt-4">@(IsRed ? "Blue" : "Red") is trying to guess</h3>
         <div class="row justify-content-center">
-            @foreach (var item in IsRed ? Game.GetContentAs<GuessWhoGame>().RedChosenItems : Game.GetContentAs<GuessWhoGame>().BlueChosenItems)
+            @foreach (var item in IsRed ? Game.GetGuessWhoContent().RedChosenItems : Game.GetGuessWhoContent().BlueChosenItems)
             {
                 <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))"/>
             }
@@ -54,12 +55,22 @@
 
     public void BoardItemChanged(GuessWhoBoardItem item)
     {
+        var game = Game.GetGuessWhoContent();
+        var board = IsRed ? game.RedBoard : game.BlueBoard;
+        var boardItem = board.Find(b => b.Id == item.Id);
+        if (boardItem == null)
+        {
+            return;
+        }
+
+        boardItem.IsVisible = item.IsVisible;
+        Game.GameContent = game;
         _boardChanged = true;
     }
 
     protected override async Task OnInitializedAsync()
     {
-        _items = await GuessWhoService.GetAllCategoryItemsAsync(Game.GetContentAs<GuessWhoGame>().Category);
+        _items = await GuessWhoService.GetAllCategoryItemsAsync(Game.GetGuessWhoContent().Category);
         _boardChanged = false;
         _buttonsDisabled = false;
         PollForGameUpdate();
@@ -68,7 +79,7 @@
     private async Task EndGame()
     {
         _buttonsDisabled = true;
-        var guessWhoGame = Game.GetContentAs<GuessWhoGame>();
+        var guessWhoGame = Game.GetGuessWhoContent();
         guessWhoGame.GameState = GameState.Finished;
         await GuessWhoService.UpdateGameAsync(Game.Id, guessWhoGame);
         OnLeaveGame();
@@ -84,7 +95,7 @@
 
     private async void PollForGameUpdate()
     {
-        var gameContent = Game.GetContentAs<GuessWhoGame>();
+        var gameContent = Game.GetGuessWhoContent();
         while (gameContent.GameState == GameState.InProgress)
         {
             await Task.Delay(TimeSpan.FromSeconds(2));
@@ -94,7 +105,7 @@
                 return;
             }
 
-            var lastSavedGameContent = lastSavedGame.GetContentAs<GuessWhoGame>();
+            var lastSavedGameContent = lastSavedGame.GetGuessWhoContent();
             if (gameContent.GameState != GameState.InProgress)
             {
                 gameContent.GameState = lastSavedGameContent.GameState;
@@ -103,15 +114,17 @@
                 return;
             }
 
-            if (IsRed && _boardChanged)
+            if (IsRed)
             {
                 lastSavedGameContent.RedBoard = gameContent.RedBoard;
-                await GuessWhoService.UpdateGameAsync(Game.Id, lastSavedGameContent);
             }
-
-            if (!IsRed && _boardChanged)
+            else
             {
                 lastSavedGameContent.BlueBoard = gameContent.BlueBoard;
+            }
+
+            if (_boardChanged)
+            {
                 await GuessWhoService.UpdateGameAsync(Game.Id, lastSavedGameContent);
             }
 

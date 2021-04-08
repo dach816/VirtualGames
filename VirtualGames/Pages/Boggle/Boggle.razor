@@ -1,5 +1,6 @@
 ﻿@page "/boggle"
 @using VirtualGames.Common.Enums
+@using VirtualGames.Common.Extensions
 @using VirtualGames.Data
 @using VirtualGames.Data.Boggle
 @inject BoggleService Service
@@ -9,7 +10,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="card col-10 border border-primary">
-            @if (_game != null && _game.GetContentAs<BoggleGame>().GameState == GameState.InProgress)
+            @if (_game != null && _game.GetBoggleContent().GameState == GameState.InProgress)
             {
                 <BoggleInProgress Game="@_game" OnLeaveGame="@(() => LeaveGame())"/>
             }
@@ -34,7 +35,7 @@
         StateHasChanged();
 
         _game = await Service.GetOrCreateGameAsync();
-        var boggleGame = _game.GetContentAs<BoggleGame>();
+        var boggleGame = _game.GetBoggleContent();
         if (boggleGame.GameState == GameState.NotStarted)
         {
             boggleGame.GameState = GameState.InProgress;
