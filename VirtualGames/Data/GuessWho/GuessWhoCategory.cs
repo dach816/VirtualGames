@@ -8,6 +8,7 @@ namespace VirtualGames.Data.GuessWho
         [Description("Harry Potter")] HarryPotter = 1,
         [Description("Looney Toons")] LooneyToons = 2,
         [Description("Fullmetal Alchemist Brotherhood")] FullmetalAlchemist = 3,
-        [Description("Avatar the Last Airbender")] Avatar = 4
+        [Description("Avatar the Last Airbender")] Avatar = 4,
+        [Description("Disney")] Disney = 5
     }
 }
