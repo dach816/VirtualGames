@@ -5,13 +5,13 @@
 @inject GuessWhoService GuessWhoService
 
 <div class="card-header text-center">
-    <h1 class="@(IsRed ? "text-danger" : "text-info") text-shadow">@(IsRed ? "Red" : "Blue") Board</h1>
+    <h1 class="text-@(Color.GetDescription())") text-shadow">@(Color.ToString("G")) Board</h1>
 </div>
 <div class="card-body text-center">
     @if (_items != null)
     {
         <div class="row">
-            @foreach (var item in IsRed ? Game.GetGuessWhoContent().RedBoard : Game.GetGuessWhoContent().BlueBoard)
+            @foreach (var item in Game.GetGuessWhoContent().Boards.Where(b => b.Color == Color))
             {
                 <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))" OnVisibilityChanged="@(i => BoardItemChanged(i))"/>
             }
@@ -21,9 +21,9 @@
             <textarea class="col-12" placeholder="Make notes here" rows="5"></textarea>
         </div>
 
-        <h3 class="mt-4">@(IsRed ? "Blue" : "Red") is trying to guess</h3>
+        <h3 class="mt-4">@(_guesser.ToString("G")) is trying to guess</h3>
         <div class="row justify-content-center">
-            @foreach (var item in IsRed ? Game.GetGuessWhoContent().RedChosenItems : Game.GetGuessWhoContent().BlueChosenItems)
+            @foreach (var item in Game.GetGuessWhoContent().ChosenItems.Where(b => b.Color == Color))
             {
                 <GuessWhoPicture BoardItem="@item" Item="@(_items.FirstOrDefault(i => i.Id == item.ItemId))"/>
             }
@@ -44,7 +44,10 @@
     public Game Game { get; set; }
 
     [Parameter]
-    public bool IsRed { get; set; }
+    public GuessWhoColor Color { get; set; }
+
+    [Parameter]
+    public int NumPlayers { get; set; }
 
     [Parameter]
     public Action OnLeaveGame { get; set; } = () => { };
@@ -52,11 +55,12 @@
     private bool _boardChanged;
     private bool _buttonsDisabled;
     private IEnumerable<GuessWhoItem> _items;
+    private GuessWhoColor _guesser;
 
     public void BoardItemChanged(GuessWhoBoardItem item)
     {
         var game = Game.GetGuessWhoContent();
-        var board = IsRed ? game.RedBoard : game.BlueBoard;
+        var board = game.Boards.Where(b => b.Color == Color).ToList();
         var boardItem = board.Find(b => b.Id == item.Id);
         if (boardItem == null)
         {
@@ -73,6 +77,13 @@
         _items = await GuessWhoService.GetAllCategoryItemsAsync(Game.GetGuessWhoContent().Category);
         _boardChanged = false;
         _buttonsDisabled = false;
+        _guesser = Color switch {
+            GuessWhoColor.Blue => GuessWhoColor.Red,
+            GuessWhoColor.Red when NumPlayers > 1 => GuessWhoColor.Green,
+            GuessWhoColor.Red when NumPlayers == 1 => GuessWhoColor.Blue,
+            GuessWhoColor.Green => GuessWhoColor.Blue,
+            _ => GuessWhoColor.Red
+        };
         PollForGameUpdate();
     }
 
@@ -114,14 +125,9 @@
                 return;
             }
 
-            if (IsRed)
-            {
-                lastSavedGameContent.RedBoard = gameContent.RedBoard;
-            }
-            else
-            {
-                lastSavedGameContent.BlueBoard = gameContent.BlueBoard;
-            }
+            var mergedBoards = lastSavedGameContent.Boards.Where(b => b.Color != Color).ToList();
+            mergedBoards.AddRange(gameContent.Boards.Where(b => b.Color == Color));
+            lastSavedGameContent.Boards = mergedBoards;
 
             if (_boardChanged)
             {

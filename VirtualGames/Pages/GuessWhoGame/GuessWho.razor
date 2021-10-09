@@ -9,8 +9,8 @@
 
 <div class="container">
     <div class="row justify-content-center">
-        <div class="card col-12 border @(_isRed.HasValue && _isRed.Value ? "border-danger" : "border-info")">
-            @if (!_isRed.HasValue || _game == null || _game.GetGuessWhoContent().GameState == GameState.NotStarted)
+        <div class="card col-12 border @(_color.HasValue ? $"border-{_color.GetDescription()}" : "border-secondary")">
+            @if (!_color.HasValue || _game == null || _game.GetGuessWhoContent().GameState == GameState.NotStarted)
             {
                 <div class="card-body text-center">
                     @if (_inProgressGames != null && _inProgressGames.Any())
@@ -20,8 +20,12 @@
                         {
                             <div class="row border border-light mx-2 p-2 justify-content-center align-middle">
                                 <p class="col-lg-5 col-12">@(game.GetGuessWhoContent().Category.GetDescription()) Game</p>
-                                <button class="col-lg-3 col-12 btn btn-danger mx-1" @onclick="@(async () => await StartOrJoinGame(true, game.Id))" disabled="@_startGameDisabled">Join Game as Red!</button>
-                                <button class="col-lg-3 col-12 btn btn-info mx-1" @onclick="@(async () => await StartOrJoinGame(false, game.Id))" disabled="@_startGameDisabled">Join Game as Blue!</button>
+                                <button class="col-lg-3 col-12 btn btn-danger mx-1" @onclick="@(async () => await StartOrJoinGame(GuessWhoColor.Red, game.Id))" disabled="@IsStartGameDisabled(GuessWhoColor.Red)">Join Game as Red!</button>
+                                <button class="col-lg-3 col-12 btn btn-info mx-1" @onclick="@(async () => await StartOrJoinGame(GuessWhoColor.Blue, game.Id))" disabled="@IsStartGameDisabled(GuessWhoColor.Blue)">Join Game as Blue!</button>
+                                @if (game.GetGuessWhoContent().NumPlayers > 1)
+                                {
+                                    <button class="col-lg-3 col-12 btn btn-success mx-1" @onclick="@(async () => await StartOrJoinGame(GuessWhoColor.Green, game.Id))" disabled="@IsStartGameDisabled(GuessWhoColor.Green)">Join Game as Green!</button>
+                                }
                             </div>
                         }
 
@@ -36,20 +40,29 @@
                             <option value=@category.Value>@category.Text</option>
                         }
                     </select>
+
+                    <label class="mx-2">Number of players:</label>
+                    <select class="col-lg-4 col-12" @onchange="@((ChangeEventArgs e) => NumPlayersChange(e))">
+                        <option value=2>2</option>
+                        <option value=3>3</option>
+                    </select>
+
                     <label class="mx-2">Number to guess:</label>
                     <select class="col-lg-4 col-12" @onchange="@((ChangeEventArgs e) => GuessNumChange(e))">
                         <option value=1>1</option>
                         <option value=2>2</option>
                     </select>
+
                     <div class="row justify-content-center mt-4">
-                        <button class="col-lg-4 col-12 btn btn-danger mx-1" @onclick="@(async () => await StartOrJoinGame(true))" disabled="@_startGameDisabled">Start or Join Game as Red!</button>
-                        <button class="col-lg-4 col-12 btn btn-info mx-1" @onclick="@(async () => await StartOrJoinGame(false))" disabled="@_startGameDisabled">Start or Join Game as Blue!</button>
+                        <button class="col-lg-4 col-12 btn btn-danger mx-1" @onclick="@(async () => await StartOrJoinGame(GuessWhoColor.Red))" disabled="@IsStartGameDisabled(GuessWhoColor.Red)">Start or Join Game as Red!</button>
+                        <button class="col-lg-4 col-12 btn btn-info mx-1" @onclick="@(async () => await StartOrJoinGame(GuessWhoColor.Blue))" disabled="@IsStartGameDisabled(GuessWhoColor.Blue)">Start or Join Game as Blue!</button>
+                        <button class="col-lg-4 col-12 btn btn-success mx-1" @onclick="@(async () => await StartOrJoinGame(GuessWhoColor.Green))" disabled="@IsStartGameDisabled(GuessWhoColor.Green)">Start or Join Game as Green!</button>
                     </div>
                 </div>
             }
             else
             {
-                <GuessWhoInProgressGame Game="@_game" IsRed="@_isRed.Value" OnLeaveGame="@(() => LeaveGame())"/>
+                <GuessWhoInProgressGame Game="@_game" Color="@_color.Value" NumPlayers="@_numPlayers" OnLeaveGame="@(() => LeaveGame())"/>
             }
         </div>
     </div>
@@ -58,7 +71,8 @@
 @code {
     private Game _game;
     private GuessWhoCategory _category;
-    private bool? _isRed;
+    private GuessWhoColor? _color;
+    private int _numPlayers;
     private bool _startGameDisabled;
     private int _numGuess = 1;
     private IEnumerable<Game> _inProgressGames;
@@ -78,14 +92,19 @@
         _numGuess = int.Parse(e.Value.ToString());
     }
 
-    private async Task StartOrJoinGame(bool isRed, string gameId = null)
+    private void NumPlayersChange(ChangeEventArgs e)
+    {
+        _numPlayers = int.Parse(e.Value.ToString());
+    }
+
+    private async Task StartOrJoinGame(GuessWhoColor color, string gameId = null)
     {
         _startGameDisabled = true;
         StateHasChanged();
 
-        _game = gameId == null ? await GuessWhoService.GetOrCreateGameAsync(_category, _numGuess) : await GuessWhoService.GetGameAsync(gameId);
+        _game = gameId == null ? await GuessWhoService.GetOrCreateGameAsync(_category, _numGuess, _numPlayers) : await GuessWhoService.GetGameAsync(gameId);
         var guessWhoGame = _game.GetGuessWhoContent();
-        _isRed = isRed;
+        _color = color;
         if (guessWhoGame.GameState == GameState.NotStarted)
         {
             guessWhoGame.GameState = GameState.InProgress;
@@ -107,8 +126,22 @@
     {
         _inProgressGames = await GuessWhoService.GetAllGamesAsync();
         _category = GuessWhoCategory.Food;
-        _isRed = null;
+        _color = null;
         _startGameDisabled = false;
         StateHasChanged();
     }
+
+    private bool IsStartGameDisabled(GuessWhoColor color)
+    {
+        if (_startGameDisabled){
+            return true;
+        }
+
+        if (_numPlayers == 1 && color == GuessWhoColor.Green)
+        {
+            return true;
+        }
+
+        return false;
+    } 
 }

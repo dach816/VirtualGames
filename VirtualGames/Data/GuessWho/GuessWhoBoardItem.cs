@@ -9,5 +9,7 @@ namespace VirtualGames.Data.GuessWho
         public string ItemId { get; set; }
 
         public bool IsVisible { get; set; }
+
+        public GuessWhoColor? Color { get; set; }
     }
 }

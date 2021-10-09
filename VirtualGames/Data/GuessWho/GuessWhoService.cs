@@ -22,7 +22,7 @@ namespace VirtualGames.Data.GuessWho
             _gameRepo.SetPartitionKey(GameType.GuessWho.ToString());
         }
 
-        public async Task<Game> GetOrCreateGameAsync(GuessWhoCategory category, int numToGuess)
+        public async Task<Game> GetOrCreateGameAsync(GuessWhoCategory category, int numToGuess, int numPlayers)
         {
             var getInProgressGameQuery = @$"SELECT TOP 1 * FROM items g WHERE g.gameContent.gameState <> 2 AND g.gameContent.category = {category:D} ORDER BY g.gameContent.startTimestamp DESC ";
             var game = (await _gameRepo.ReadAsync(getInProgressGameQuery)).FirstOrDefault();
@@ -37,14 +37,22 @@ namespace VirtualGames.Data.GuessWho
                 throw new Exception($"Need 24 items for category {category:G}.");
             }
 
-            var boardItems = categoryItems.Select(i =>
-                new GuessWhoBoardItem
-                {
-                    ItemId = i.Id,
-                    IsVisible = true
-                }).ToList();
-            var redChosenItems = GetRandomItems(boardItems, null, numToGuess);
-            var blueChosenItems = GetRandomItems(boardItems, redChosenItems, numToGuess);
+            var boardItems = new List<GuessWhoBoardItem>();
+            var chosenItems = new List<GuessWhoBoardItem>();
+            for(var i = 0; i < numPlayers; i++){
+                var colorBoardItems = categoryItems.Select(c =>
+                    new GuessWhoBoardItem
+                    {
+                        ItemId = c.Id,
+                        IsVisible = true,
+                        Color = (GuessWhoColor)i
+                    }).ToList();
+                var colorChosenItems = GetRandomItems(colorBoardItems, chosenItems, numToGuess);
+
+                boardItems.AddRange(colorBoardItems);
+                chosenItems.AddRange(colorChosenItems);
+            }
+
             game = new Game
             {
                 Id = Guid.NewGuid().ToString(),
@@ -53,11 +61,9 @@ namespace VirtualGames.Data.GuessWho
                 {
                     GameState = GameState.NotStarted,
                     Category = category,
-                    BlueBoard = boardItems,
-                    RedBoard = boardItems,
-                    RedChosenItems = redChosenItems,
-                    BlueChosenItems = blueChosenItems,
-                    IsRedTurn = false,
+                    Boards = boardItems,
+                    ChosenItems = chosenItems,
+                    NumPlayers = numPlayers,
                     NumToGuess = numToGuess,
                     StartTimestamp = DateTime.UtcNow
                 }
