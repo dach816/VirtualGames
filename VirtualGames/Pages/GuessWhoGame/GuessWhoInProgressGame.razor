@@ -5,7 +5,7 @@
 @inject GuessWhoService GuessWhoService
 
 <div class="card-header text-center">
-    <h1 class="text-@(Color.GetDescription())") text-shadow">@(Color.ToString("G")) Board</h1>
+    <h1 class="text-@(Color.GetDescription()) text-shadow">@(Color.ToString("G")) Board</h1>
 </div>
 <div class="card-body text-center">
     @if (_items != null)
@@ -79,8 +79,8 @@
         _buttonsDisabled = false;
         _guesser = Color switch {
             GuessWhoColor.Blue => GuessWhoColor.Red,
-            GuessWhoColor.Red when NumPlayers > 1 => GuessWhoColor.Green,
-            GuessWhoColor.Red when NumPlayers == 1 => GuessWhoColor.Blue,
+            GuessWhoColor.Red when NumPlayers > 2 => GuessWhoColor.Green,
+            GuessWhoColor.Red when NumPlayers == 2 => GuessWhoColor.Blue,
             GuessWhoColor.Green => GuessWhoColor.Blue,
             _ => GuessWhoColor.Red
         };
