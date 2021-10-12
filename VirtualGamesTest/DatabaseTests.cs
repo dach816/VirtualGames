@@ -97,21 +97,32 @@ namespace VirtualGamesTest
 
                 var imageArray = File.ReadAllBytes(fileName);
                 var imageString = Convert.ToBase64String(imageArray);
-                var guessWhoItem = new GuessWhoItem
+                var guessWhoItem = await _guessWhoItemRepo.ReadByIdAsync(id.ToString());
+                if (guessWhoItem == null)
                 {
-                    Id = id.ToString(),
-                    Category = category,
-                    Name = GetFileNameNoExtension(fileName),
-                    Picture = $"data:image/jpeg;base64,{imageString}"
-                };
-                await _guessWhoItemRepo.CreateAsync(guessWhoItem);
+                    guessWhoItem = new GuessWhoItem
+                    {
+                        Id = id.ToString(),
+                        Category = category,
+                        Name = GetFileNameNoExtension(fileName),
+                        Picture = $"data:image/jpeg;base64,{imageString}"
+                    };
+                    await _guessWhoItemRepo.CreateAsync(guessWhoItem);
+                }
+                else
+                {
+                    guessWhoItem.Name = GetFileNameNoExtension(fileName);
+                    guessWhoItem.Picture = $"data:image/jpeg;base64,{imageString}";
+                    await _guessWhoItemRepo.UpdateAsync(guessWhoItem);
+                }
+
                 id++;
             }
         }
 
         private string GetFileNameNoExtension(string fileName)
         {
-            var dotIndex = fileName.IndexOf('.');
+            var dotIndex = fileName.LastIndexOf('.');
             var slashIndex = fileName.LastIndexOf('\\') + 1;
             return fileName.Substring(slashIndex, dotIndex - slashIndex);
         }
