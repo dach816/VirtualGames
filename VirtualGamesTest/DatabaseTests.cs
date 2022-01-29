@@ -9,6 +9,7 @@ using VirtualGames.Common;
 using VirtualGames.Data;
 using VirtualGames.Data.GuessWho;
 using VirtualGames.Data.Password;
+using VirtualGames.Data.Wordle;
 using Xunit;
 
 namespace VirtualGamesTest
@@ -18,6 +19,7 @@ namespace VirtualGamesTest
         private readonly Repository<Password> _passwordRepo;
         private readonly Repository<Game> _GameRepo;
         private readonly Repository<GuessWhoItem> _guessWhoItemRepo;
+        private readonly Repository<WordleWord> _wordRepo;
 
         public DatabaseTests()
         {
@@ -27,6 +29,7 @@ namespace VirtualGamesTest
             _passwordRepo = new Repository<Password>(cosmosClient, configuration["CosmosDb:DatabaseName"]);
             _GameRepo = new Repository<Game>(cosmosClient, configuration["CosmosDb:DatabaseName"]);
             _guessWhoItemRepo = new Repository<GuessWhoItem>(cosmosClient, configuration["CosmosDb:DatabaseName"]);
+            _wordRepo = new Repository<WordleWord>(cosmosClient, configuration["CosmosDb:DatabaseName"]);
         }
 
         [Fact]
@@ -107,6 +110,25 @@ namespace VirtualGamesTest
                 await _guessWhoItemRepo.CreateAsync(guessWhoItem);
                 id++;
             }
+        }
+
+        [Theory]
+        [InlineData("")]
+        public async Task AddWordleWords(string word)
+        {
+            word = word.ToUpper();
+
+            _wordRepo.SetPartitionKey(word.Length.ToString());
+            var wordleWord = new WordleWord {
+                Id = Guid.NewGuid().ToString(),
+                Word = word,
+                Letters = word.Select((l, i) => new WordleLetter {
+                    Letter = l,
+                    Index = i
+                }).ToList(),
+                Category = word.Length.ToString()
+            };
+            await _wordRepo.CreateAsync(wordleWord);
         }
 
         private string GetFileNameNoExtension(string fileName)

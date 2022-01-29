@@ -4,6 +4,7 @@
     {
         Password,
         GuessWho,
-        Boggle
+        Boggle,
+        Wordle
     }
 }

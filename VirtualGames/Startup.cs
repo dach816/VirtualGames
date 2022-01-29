@@ -14,6 +14,7 @@ using VirtualGames.Data;
 using VirtualGames.Data.Boggle;
 using VirtualGames.Data.GuessWho;
 using VirtualGames.Data.Password;
+using VirtualGames.Data.Wordle;
 
 namespace VirtualGames
 {
@@ -40,11 +41,13 @@ namespace VirtualGames
             services.AddSingleton<IRepository<Password>>(InitializeCosmosClientInstanceAsync<Password>(dbConfig));
             services.AddSingleton<IRepository<GuessWhoItem>>(InitializeCosmosClientInstanceAsync<GuessWhoItem>(dbConfig));
             services.AddSingleton<IRepository<BoggleDie>>(InitializeCosmosClientInstanceAsync<BoggleDie>(dbConfig));
+            services.AddSingleton<IRepository<WordleWord>>(InitializeCosmosClientInstanceAsync<WordleWord>(dbConfig));
 
             // Services
             services.AddSingleton<PasswordService>();
             services.AddSingleton<GuessWhoService>();
             services.AddSingleton<BoggleService>();
+            services.AddSingleton<WordleService>();
 
 
             if (!services.Any(x => x.ServiceType == typeof(HttpClient)))
